@@ -1,0 +1,1757 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>제일기획 AI 전략 인텔리전스 플랫폼</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.min.css">
+<script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<style>
+* { word-break: keep-all; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; color: #fff; }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
+
+/* Tab */
+.tab-btn { transition: all 0.2s ease; border-bottom: 2px solid transparent; }
+.tab-btn.active { color: #f59e0b; border-bottom-color: #f59e0b; }
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Region btn */
+.region-btn { transition: all 0.2s ease; }
+.region-btn.active { background: #fff; color: #09090b; }
+
+/* Card */
+.card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 12px; }
+.card:hover { border-color: rgba(255,255,255,0.12); }
+
+/* Gauge */
+.gauge-bar { height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+.gauge-fill { height: 100%; border-radius: 2px; transition: width 0.6s ease; }
+
+/* Bookmark */
+.bookmark-btn { cursor: pointer; transition: color 0.2s; }
+.bookmark-btn.saved { color: #f59e0b; }
+
+/* Modal overlay */
+.modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; backdrop-filter: blur(4px); }
+.modal-overlay.open { display: flex; align-items: center; justify-content: center; }
+.modal-box { background: #18181b; border: 1px solid rgba(255,255,255,0.1); border-radius: 16px; width: 90%; max-width: 560px; max-height: 80vh; overflow-y: auto; padding: 24px; }
+
+/* Side panel */
+.side-panel { position: fixed; right: -420px; top: 0; bottom: 0; width: 400px; background: #18181b; border-left: 1px solid rgba(255,255,255,0.08); z-index: 90; transition: right 0.3s ease; overflow-y: auto; padding: 24px; }
+.side-panel.open { right: 0; }
+
+/* D3 graph */
+#ontology-graph { width: 100%; height: 680px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+.edge-label { font-size: 8px; fill: rgba(161,161,170,0.75); pointer-events: none; }
+.node text { fill: #e4e4e7; font-size: 11px; font-family: 'Pretendard', sans-serif; pointer-events: none; }
+.link { stroke-opacity: 0.5; }
+
+/* Refresh spin */
+@keyframes spin { to { transform: rotate(360deg); } }
+.spinning { animation: spin 1s linear infinite; }
+
+/* Sentiment donut container */
+.donut-container { width: 80px; height: 80px; }
+
+/* Timeline */
+.timeline-item::before { content: ''; position: absolute; left: -17px; top: 6px; width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl bg-zinc-950/90">
+  <div class="max-w-screen-2xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
+    <div class="flex items-center gap-3">
+      <div class="w-7 h-7 bg-amber-500 rounded flex items-center justify-center">
+        <span class="text-black font-black text-xs">제일</span>
+      </div>
+      <span class="font-bold text-white text-sm">AI 전략 인텔리전스 플랫폼</span>
+      <span class="hidden md:inline text-zinc-600 text-xs">|</span>
+      <span class="hidden md:inline text-zinc-500 text-xs" id="last-updated">2026-03-22 09:00 기준</span>
+    </div>
+    <button id="refresh-btn" onclick="handleRefresh()" class="flex items-center gap-1.5 text-xs text-zinc-400 hover:text-white border border-white/10 rounded-full px-3 py-1.5 transition-colors">
+      <iconify-icon icon="solar:refresh-linear" id="refresh-icon"></iconify-icon>
+      <span id="refresh-label">새로고침</span>
+    </button>
+  </div>
+</header>
+
+<!-- TAB BAR -->
+<div class="sticky top-14 z-40 border-b border-white/5 bg-zinc-950/95 backdrop-blur-xl">
+  <div class="max-w-screen-2xl mx-auto px-6 flex gap-0 overflow-x-auto">
+    <button class="tab-btn active text-sm px-4 py-3 whitespace-nowrap text-zinc-300 hover:text-white" onclick="switchTab('overview', this)">Overview</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('swot', this)">SWOT 분석</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('weaksignal', this)">Weak Signal</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('opportunity', this)">Opportunity Map</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('ontology', this)">Ontology</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('feed', this)">Intelligence Feed</button>
+  </div>
+</div>
+
+<div class="max-w-screen-2xl mx-auto px-6 py-6">
+
+<!-- ===== TAB: OVERVIEW ===== -->
+<div id="tab-overview" class="tab-content active">
+  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+
+    <!-- SWOT 요약 카드 -->
+    <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('swot', document.querySelectorAll('.tab-btn')[1])">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">SWOT 요약</span>
+        <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
+          <p class="text-[10px] text-emerald-400 font-semibold mb-1">S 강점</p>
+          <p class="text-[11px] text-zinc-300 leading-tight">국내 과점 지위<br>현금 4,700억 + 최대 실적</p>
+        </div>
+        <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-2">
+          <p class="text-[10px] text-red-400 font-semibold mb-1">W 약점</p>
+          <p class="text-[11px] text-zinc-300 leading-tight">삼성 의존도 71%<br>AI 전략 실행 격차</p>
+        </div>
+        <div class="bg-sky-500/10 border border-sky-500/20 rounded-lg p-2">
+          <p class="text-[10px] text-sky-400 font-semibold mb-1">O 기회</p>
+          <p class="text-[11px] text-zinc-300 leading-tight">생성형 AI 광고시장<br>리테일 미디어 성장</p>
+        </div>
+        <div class="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2">
+          <p class="text-[10px] text-orange-400 font-semibold mb-1">T 위협</p>
+          <p class="text-[11px] text-zinc-300 leading-tight">WPP 경로 리스크<br>빅테크 직접 집행</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Weak Signal TOP 3 -->
+    <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('weaksignal', document.querySelectorAll('.tab-btn')[2])">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">Weak Signal TOP 3</span>
+        <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+      </div>
+      <div class="space-y-2">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-white font-medium">[n] 취약성 마케팅</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
+              <span class="text-[10px] text-emerald-400">▲ +12</span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-amber-400">82</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:82%"></div></div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-white font-medium">[t] 생성형AI 광고</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
+              <span class="text-[10px] text-emerald-400">▲ +9</span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-amber-400">76</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:76%"></div></div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-white font-medium">[t] Retail Media AI</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">북미</span>
+              <span class="text-[10px] text-emerald-400">▲ +7</span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-amber-400">71</span>
+        </div>
+        <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:71%"></div></div>
+      </div>
+    </div>
+
+    <!-- Opportunity TOP 3 -->
+    <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('opportunity', document.querySelectorAll('.tab-btn')[3])">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">Opportunity TOP 3</span>
+        <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+      </div>
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-white font-medium">AI 퍼포먼스 마케팅</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
+              <span class="text-[10px] text-zinc-500">중요도 9.2 / 만족도 2.1</span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-orange-400">16.3</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-white font-medium">Retail Media AI 자동화</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">북미</span>
+              <span class="text-[10px] text-zinc-500">중요도 8.8 / 만족도 2.4</span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-orange-400">15.2</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <div>
+            <p class="text-xs text-white font-medium">컴플라이언스 크리에이티브</p>
+            <div class="flex items-center gap-1 mt-0.5">
+              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">유럽</span>
+              <span class="text-[10px] text-zinc-500">중요도 8.3 / 만족도 1.8</span>
+            </div>
+          </div>
+          <span class="text-sm font-bold text-orange-400">14.8</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 저장된 인사이트 -->
+    <div class="card p-4">
+      <div class="flex items-center justify-between mb-3">
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">저장된 인사이트</span>
+        <iconify-icon icon="solar:star-bold" class="text-amber-400 text-xs"></iconify-icon>
+      </div>
+      <div id="saved-insights-list" class="space-y-2">
+        <p class="text-xs text-zinc-600">북마크한 항목이 여기에 표시됩니다.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 최근 업데이트 타임라인 -->
+  <div class="card p-5">
+    <p class="text-xs text-zinc-400 uppercase tracking-widest mb-4">최근 업데이트 타임라인</p>
+    <div class="relative pl-6 border-l border-white/5">
+      <div class="space-y-4">
+        <div class="relative timeline-item">
+          <p class="text-xs text-zinc-500">2026-03-22</p>
+          <p class="text-sm text-zinc-200">[t] 생성형AI 광고 신호 강도 76 → 82로 상승. 국내 마케팅 매체 언급 빈도 3주 연속 증가.</p>
+        </div>
+        <div class="relative timeline-item">
+          <p class="text-xs text-zinc-500">2026-03-21</p>
+          <p class="text-sm text-zinc-200">Opportunity Map: 북미 'Retail Media AI 자동화' 기회점수 14.1 → 15.2 상향. LinkedIn 포스트 급증.</p>
+        </div>
+        <div class="relative timeline-item">
+          <p class="text-xs text-zinc-500">2026-03-19</p>
+          <p class="text-sm text-zinc-200">SWOT W2(AI 전략 실행 격차) 관련 AdAge 기사 3건 신규 수집. Publicis AI 전환 비교 분석 추가.</p>
+        </div>
+        <div class="relative timeline-item">
+          <p class="text-xs text-zinc-500">2026-03-17</p>
+          <p class="text-sm text-zinc-200">유럽 [e] EU AI법 크리에이티브 신호 첫 감지. 5개월 전 대비 등장 빈도 340% 증가.</p>
+        </div>
+        <div class="relative timeline-item">
+          <p class="text-xs text-zinc-500">2026-03-15</p>
+          <p class="text-sm text-zinc-200">Ontology 그래프: W3(가치사슬 AI 공백) → OPP_ai_perf 연결 강도 0.85 → 0.90 업데이트.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB: SWOT ===== -->
+<div id="tab-swot" class="tab-content">
+  <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+    <div class="xl:col-span-2 space-y-4">
+      <!-- SWOT 4분면 -->
+      <div class="grid grid-cols-2 gap-3">
+        <!-- S -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-6 h-6 rounded bg-emerald-500/20 text-emerald-400 text-xs font-bold flex items-center justify-center">S</span>
+            <span class="text-sm font-semibold text-emerald-400">강점 Strength</span>
+          </div>
+          <ul class="space-y-2" id="swot-s-list"></ul>
+        </div>
+        <!-- W -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-6 h-6 rounded bg-red-500/20 text-red-400 text-xs font-bold flex items-center justify-center">W</span>
+            <span class="text-sm font-semibold text-red-400">약점 Weakness</span>
+          </div>
+          <ul class="space-y-2" id="swot-w-list"></ul>
+        </div>
+        <!-- O -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-6 h-6 rounded bg-sky-500/20 text-sky-400 text-xs font-bold flex items-center justify-center">O</span>
+            <span class="text-sm font-semibold text-sky-400">기회 Opportunity</span>
+          </div>
+          <ul class="space-y-2" id="swot-o-list"></ul>
+        </div>
+        <!-- T -->
+        <div class="card p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="w-6 h-6 rounded bg-orange-500/20 text-orange-400 text-xs font-bold flex items-center justify-center">T</span>
+            <span class="text-sm font-semibold text-orange-400">위협 Threat</span>
+          </div>
+          <ul class="space-y-2" id="swot-t-list"></ul>
+        </div>
+      </div>
+      <!-- 전략 매트릭스 -->
+      <div>
+        <p class="text-xs text-zinc-400 uppercase tracking-widest mb-3">전략 매트릭스</p>
+        <div class="grid grid-cols-2 gap-3" id="strategy-matrix"></div>
+      </div>
+    </div>
+    <!-- AI 해석 패널 -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+      </div>
+      <div id="swot-ai-panel">
+        <p class="text-xs text-zinc-500 mb-4">항목을 클릭하면 상세 근거와 AI 해석이 표시됩니다.</p>
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">감지된 주요 신호</p>
+            <p class="text-sm text-zinc-300 leading-relaxed">AI 전환 실행 격차(W2)와 빅테크 직접 집행(T2)이 동시에 강화되고 있어, 2026년 하반기가 전략적 분기점입니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
+            <p class="text-sm text-zinc-300 leading-relaxed">미디어 집행 수수료 수익 감소 압력이 가중되는 반면, AI 기반 컨설팅 역량을 보유한 에이전시에 대한 광고주 선호도는 상승 중입니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
+            <p class="text-sm text-zinc-300 leading-relaxed">현금(S2) 기반 AI 스타트업 M&A를 2026 Q3 전에 실행하고, CopyJoe·ContiJoe를 통합 플랫폼으로 격상하는 로드맵 수립을 권고합니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB: WEAK SIGNAL ===== -->
+<div id="tab-weaksignal" class="tab-content">
+  <div class="text-xs text-zinc-500 bg-zinc-900/50 border border-white/5 rounded-lg p-3 mb-4 leading-relaxed">
+    Weak Signal은 아직 업계 담론이 되지 않은 변화의 초기 신호입니다. Strong Signal이 됐을 때는 이미 경쟁사도 알고 있습니다. 이 탭은 그 이전 단계를 먼저 감지하여 제일기획이 선제적으로 전략 포지션을 잡을 수 있도록 지원합니다.
+  </div>
+  <div class="flex gap-2 mb-4">
+    <button class="region-btn active text-xs border border-white/10 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('ws','국내',this)">국내</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('ws','북미',this)">북미</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('ws','유럽',this)">유럽</button>
+  </div>
+  <div class="flex flex-col xl:flex-row gap-4 items-start">
+    <div class="w-full xl:flex-none" style="max-width:600px">
+      <div class="card p-4" style="position:relative;">
+        <canvas id="ws-chart" height="420"></canvas>
+      </div>
+      <!-- 범례 -->
+      <div class="flex gap-4 mt-3 px-2">
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span><span class="text-xs text-zinc-400">[e] 환경·규제</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-400 inline-block"></span><span class="text-xs text-zinc-400">[n] 비즈니스 니즈</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-violet-400 inline-block"></span><span class="text-xs text-zinc-400">[t] 기술·제품</span></div>
+      </div>
+    </div>
+    <!-- AI 해석 패널 -->
+    <div class="card p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+      </div>
+      <div id="ws-ai-panel">
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">감지된 주요 신호</p>
+            <p class="text-sm text-zinc-300 leading-relaxed" id="ws-signal-text">국내 기준, [n] 취약성 마케팅이 좌상단 Weak Signal 구간에서 가장 높은 증가율(20.8%)을 기록 중입니다. Z세대 타깃 캠페인 전략에 즉각 반영 가능한 신호입니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
+            <p class="text-sm text-zinc-300 leading-relaxed" id="ws-impact-text">브랜드 크리에이티브 전략 수립 시 '완전함'보다 '진정성' 메시지 방향으로의 전환을 주요 클라이언트에게 선제 제안할 수 있습니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
+            <p class="text-sm text-zinc-300 leading-relaxed" id="ws-action-text">향후 4주 내 Z세대 타깃 클라이언트(삼성 MX, 소비재 브랜드)에 취약성 마케팅 적용 캠페인 콘셉트 제안서 선제 제출을 권고합니다.</p>
+          </div>
+        </div>
+      </div>
+      <!-- 드릴다운 결과 (키워드 클릭 시) -->
+      <div id="ws-drilldown" class="hidden mt-4 pt-4 border-t border-white/5">
+        <p class="text-xs text-amber-400 font-semibold mb-2" id="ws-drill-title"></p>
+        <div id="ws-drill-news" class="space-y-2 mb-3"></div>
+        <canvas id="ws-trend-chart" height="80"></canvas>
+        <div id="ws-drill-tags" class="flex flex-wrap gap-1 mt-2"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB: OPPORTUNITY MAP ===== -->
+<div id="tab-opportunity" class="tab-content">
+  <div class="text-xs text-zinc-500 bg-zinc-900/50 border border-white/5 rounded-lg p-3 mb-4 leading-relaxed">
+    소셜미디어 데이터에서 소비자와 시장의 실시간 반응을 읽어 실행 가능한 사업 기회를 시각화합니다. 특히 <strong class="text-zinc-300">중요도는 높으나 현재 충족도가 낮은 영역</strong>을 우선 식별합니다.
+  </div>
+  <div class="flex gap-2 mb-4">
+    <button class="region-btn active text-xs border border-white/10 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('opp','국내',this)">국내</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('opp','북미',this)">북미</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('opp','유럽',this)">유럽</button>
+  </div>
+  <div class="flex flex-col xl:flex-row gap-4 items-start">
+    <div class="w-full xl:flex-none" style="max-width:600px">
+      <div class="card p-4">
+        <canvas id="opp-chart" height="420"></canvas>
+      </div>
+      <div class="flex gap-4 mt-3 px-2">
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-400 inline-block"></span><span class="text-xs text-zinc-400">Underserved (핵심 기회)</span></div>
+        <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-zinc-600 inline-block"></span><span class="text-xs text-zinc-400">Served / Over-served</span></div>
+      </div>
+    </div>
+    <div class="card p-5">
+      <div class="flex items-center gap-2 mb-4">
+        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+      </div>
+      <div id="opp-ai-panel">
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">핵심 기회</p>
+            <p class="text-sm text-zinc-300 leading-relaxed" id="opp-signal-text">국내 기준 'AI 퍼포먼스 마케팅'이 기회점수 16.3으로 최상위입니다. 중요도(9.2) 대비 만족도(2.1)의 격차가 가장 큰 미충족 영역입니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
+            <p class="text-sm text-zinc-300 leading-relaxed" id="opp-impact-text">현재 제일기획의 DnA센터 역량을 AI 퍼포먼스 최적화 서비스로 패키징하면 즉시 수주 가능한 광고주 수요가 다수 존재합니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
+            <p class="text-sm text-zinc-300 leading-relaxed" id="opp-action-text">AI 퍼포먼스 마케팅 전용 서비스 라인업을 2026 Q2 내 런칭하고, 비계열 광고주 영업 파이프라인 최우선 집중을 권고합니다.</p>
+          </div>
+        </div>
+      </div>
+      <div id="opp-drilldown" class="hidden mt-4 pt-4 border-t border-white/5">
+        <p class="text-xs text-amber-400 font-semibold mb-2" id="opp-drill-title"></p>
+        <div id="opp-drill-social" class="space-y-2 mb-3"></div>
+        <div id="opp-drill-sentiment" class="mb-3"></div>
+        <div id="opp-drill-tags" class="flex flex-wrap gap-1"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB: ONTOLOGY ===== -->
+<div id="tab-ontology" class="tab-content">
+  <div class="flex gap-2 mb-4">
+    <button class="region-btn active text-xs border border-white/10 rounded-full px-4 py-1.5 transition-colors" onclick="setOntologyRegion('전체',this)">전체</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setOntologyRegion('국내',this)">국내</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setOntologyRegion('북미',this)">북미</button>
+    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setOntologyRegion('유럽',this)">유럽</button>
+  </div>
+  <!-- 범례 -->
+  <div class="flex flex-wrap gap-x-4 gap-y-2 mb-3">
+    <div class="flex items-center gap-1.5"><span class="w-4 h-3 rounded-sm inline-block" style="background:#10b981;opacity:0.7"></span><span class="text-xs text-zinc-400">강점</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-4 h-3 rounded-sm inline-block" style="background:#ef4444;opacity:0.7"></span><span class="text-xs text-zinc-400">약점</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-4 h-3 rounded-sm inline-block" style="background:#38bdf8;opacity:0.7"></span><span class="text-xs text-zinc-400">기회</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-4 h-3 rounded-sm inline-block" style="background:#f97316;opacity:0.7"></span><span class="text-xs text-zinc-400">위협</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 inline-block rotate-45" style="background:#a78bfa;opacity:0.7"></span><span class="text-xs text-zinc-400 ml-1">약신호</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full inline-block" style="background:#fbbf24;opacity:0.7"></span><span class="text-xs text-zinc-400">핵심역량</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-4 h-3 rounded-sm inline-block border" style="background:#94a3b8;opacity:0.5;border-style:dashed;border-color:#94a3b8"></span><span class="text-xs text-zinc-400">자산</span></div>
+    <div class="flex items-center gap-1.5"><span class="w-4 h-3 rounded-full inline-block" style="background:#34d399;opacity:0.7"></span><span class="text-xs text-zinc-400">전략행동</span></div>
+  </div>
+  <div class="flex flex-col xl:flex-row gap-4 items-start">
+    <div class="xl:w-[55%] min-w-0">
+      <svg id="ontology-graph"></svg>
+    </div>
+    <div class="card p-5 xl:flex-1 shrink-0">
+      <div class="flex items-center gap-2 mb-4">
+        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
+        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+      </div>
+      <div id="onto-ai-panel">
+        <div class="space-y-4">
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">온톨로지 구조 개요</p>
+            <p class="text-xs text-zinc-400 leading-relaxed">34개 노드 · 50개 엣지로 구성된 전략 지식 그래프입니다. 강점·약점·기회·위협·약신호·역량·자산·전략행동이 유기적으로 연결되어 있습니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-amber-400 font-semibold mb-1">핵심 허브 노드</p>
+            <p class="text-xs text-zinc-400 leading-relaxed"><span class="text-white">W3(가치사슬 AI 공백)</span>은 3개 역량 공백과 동시에 연결된 최대 허브입니다. <span class="text-white">AI_ADV(AI 광고 플랫폼)</span>는 위협·기회·전략행동이 모두 교차하는 전략 중심점입니다.</p>
+          </div>
+          <div>
+            <p class="text-xs text-zinc-500">노드를 클릭하면 BFS 기반으로 5단계까지의 연결 경로와 전략적 해석을 제공합니다.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TAB: INTELLIGENCE FEED ===== -->
+<div id="tab-feed" class="tab-content">
+  <div class="flex flex-wrap gap-2 mb-4" id="feed-filters">
+    <button class="feed-filter active text-xs border border-white/10 rounded-full px-3 py-1.5 transition-colors" onclick="setFeedFilter('전체',this)">전체</button>
+    <button class="feed-filter text-xs border border-white/10 text-zinc-400 rounded-full px-3 py-1.5 transition-colors" onclick="setFeedFilter('뉴스',this)">뉴스</button>
+    <button class="feed-filter text-xs border border-white/10 text-zinc-400 rounded-full px-3 py-1.5 transition-colors" onclick="setFeedFilter('소셜',this)">소셜</button>
+    <button class="feed-filter text-xs border border-white/10 text-zinc-400 rounded-full px-3 py-1.5 transition-colors" onclick="setFeedFilter('국내',this)">국내</button>
+    <button class="feed-filter text-xs border border-white/10 text-zinc-400 rounded-full px-3 py-1.5 transition-colors" onclick="setFeedFilter('북미',this)">북미</button>
+    <button class="feed-filter text-xs border border-white/10 text-zinc-400 rounded-full px-3 py-1.5 transition-colors" onclick="setFeedFilter('유럽',this)">유럽</button>
+  </div>
+  <div class="flex flex-col xl:flex-row gap-4 items-start">
+    <div class="w-full xl:flex-none xl:w-96 space-y-2" id="feed-list"></div>
+    <div class="flex-1 sticky top-28">
+      <div class="card p-5 min-h-64" id="feed-detail-panel">
+        <div class="flex items-center justify-center h-32 text-zinc-600 text-sm flex-col gap-2">
+          <iconify-icon icon="solar:document-text-linear" class="text-2xl"></iconify-icon>
+          <p>피드 항목을 클릭하면 상세 인사이트가 표시됩니다.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- end main -->
+
+<!-- SIDE PANEL -->
+<div id="side-panel" class="side-panel">
+  <div class="flex items-center justify-between mb-5">
+    <p class="text-sm font-semibold text-white" id="side-panel-title">상세 정보</p>
+    <button onclick="closeSidePanel()" class="text-zinc-500 hover:text-white transition-colors">
+      <iconify-icon icon="solar:close-linear" class="text-lg"></iconify-icon>
+    </button>
+  </div>
+  <div id="side-panel-content"></div>
+</div>
+
+<!-- BOOKMARK MEMO MODAL -->
+<div id="bookmark-modal" class="modal-overlay">
+  <div class="modal-box">
+    <p class="text-sm font-semibold text-white mb-3">인사이트 메모</p>
+    <p class="text-xs text-zinc-400 mb-2" id="bookmark-item-label"></p>
+    <textarea id="bookmark-memo-input" class="w-full bg-zinc-900 border border-white/10 rounded-lg p-3 text-sm text-zinc-200 resize-none h-24 focus:outline-none focus:border-amber-500/50" placeholder="이 항목에 대한 메모를 입력하세요..."></textarea>
+    <div class="flex justify-end gap-2 mt-3">
+      <button onclick="closeBookmarkModal()" class="text-xs text-zinc-400 border border-white/10 rounded-full px-4 py-2 hover:bg-white/5 transition-colors">취소</button>
+      <button onclick="saveBookmark()" class="text-xs bg-amber-500 text-black font-semibold rounded-full px-4 py-2 hover:bg-amber-400 transition-colors">저장</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MOCK DATA
+// ============================================================
+const SWOT_DATA = {
+  strength: [
+    {id:'S1', text:'국내 광고 시장 구조적 과점 지위 — 3사가 전체 77개사 취급액의 77% 점유.', sources:['한국광고총연합회']},
+    {id:'S2', text:'역대 최대 실적 + 현금 4,700억 원 — 매총이익 1조 8,599억 원(YoY +8%).', sources:['제53기 영업보고서']},
+    {id:'S3', text:'16건 이상 M&A로 축적된 디지털·데이터 자산 (아이리스·Atom42 등).', sources:['제53기 영업보고서']},
+    {id:'S4', text:'자체 AI 솔루션 CopyJoe·ContiJoe 운영, Cheil Connect AI 준비 중.', sources:['CEO 메시지']}
+  ],
+  weakness: [
+    {id:'W1', text:'삼성 계열사 의존도 71% — 비계열 매출 29%, 이해충돌 구조.', sources:['KB리서치','제53기 영업보고서']},
+    {id:'W2', text:'AI 전략 실행 격차 — Publicis 73% AI 전환 대비 텍스트·이미지 수준에 머뭄.', sources:['AdAge','Marketing Dive']},
+    {id:'W3', text:'가치사슬 3단계 AI 공백 — 크리에이티브·미디어 집행·성과 측정 모두 공백.', sources:['내부 분석']},
+    {id:'W4', text:'현금 보유 대비 AI 투자 실행 지연 — 스몰딜(28~142억)에만 집중.', sources:['더벨','공시']}
+  ],
+  opportunity: [
+    {id:'O1', text:'생성형 AI 광고 시장 — 2032년 1,924억 달러, 전체 디지털 광고의 13% 전망.', sources:['블룸버그']},
+    {id:'O2', text:'리테일 미디어 시장 1,795억 달러(+15.4%), 2028년까지 두 자릿수 성장.', sources:['Coresight','Criteo']},
+    {id:'O3', text:'신흥 시장 두 자릿수 성장 — 삼성 이해충돌 낮아 비계열 영업 가능.', sources:['제53기 영업보고서']},
+    {id:'O4', text:'광고주의 컨설팅 역량 우선 선정 기준 증가.', sources:['한국광고총연합회']},
+    {id:'O5', text:'M&A를 통한 AI 기술 내재화 창 — 스타트업 몸값 상승 전.', sources:['내부 분석']}
+  ],
+  threat: [
+    {id:'T1', text:'AI 전환 실패 시 WPP 경로 — 시총 87% 소멸(222억→29억 달러) 선례.', sources:['AdAge','Financial Times']},
+    {id:'T2', text:'빅테크 AI 자동화(Google PMax·Meta Advantage+) 확대로 에이전시 부가가치 감소.', sources:['WARC']},
+    {id:'T3', text:'Publicis AI 독주 + 국내 펜타클(+26%)·미쓰윤(+133%) 상하단 동시 압박.', sources:['AdAge','브랜드브리프']},
+    {id:'T4', text:'국내 광고 시장 성장 둔화 — 2024년 +2.8%, 경기 침체·정치 불안정.', sources:['KOBACO']}
+  ],
+  strategies: {
+    SO: {title:'AI 역량으로 글로벌 비계열 수주 확대', content:'역대 최대 현금(S2)과 M&A 자산(S3)을 활용해 AI 기술을 내재화하고, 신흥시장(O3)에서 비계열 광고주 영업 선제 확대.', color:'emerald'},
+    ST: {title:'과점 지위 + AI ROI 증명으로 경쟁 방어', content:'국내 과점 구조(S1) 방어선 유지, AI 기반 캠페인 ROI를 수치 제시로 빅테크(T2) 및 신흥 대행사(T3) 압박 대응.', color:'sky'},
+    WO: {title:'AI 공백 해소로 기회 선점', content:'W3(가치사슬 AI 공백)을 O1(생성형 AI 성장)의 진입 창으로 전환. AI 스타트업 M&A(O5)로 역량 빠르게 확보.', color:'violet'},
+    WT: {title:'삼성 의존도 낮추고 리스크 헤지', content:'W1(삼성 의존도)과 T1(WPP 경로)의 유사성 인식 하에 비계열 수주 비중을 2027년까지 50%로 확대하는 로드맵 수립.', color:'rose'}
+  }
+};
+
+const WS_DATA = {
+  국내: [
+    {id:'ws_001', label:'[n] 취약성 마케팅', cat:'n', freq:28, growth:0.208, isWeak:true, score:82, change:12, news:[{t:'Z세대 마케팅 새 키워드 취약성',d:'2026-03-20',s:'마케팅위크'},{t:'불완전함을 드러내는 브랜드 전략',d:'2026-03-18',s:'이투데이'}], swot:['O4','W2'], opp:['취약성 콘텐츠 마케팅']},
+    {id:'ws_002', label:'[t] 생성형AI 광고', cat:'t', freq:142, growth:0.187, isWeak:true, score:76, change:9, news:[{t:'생성AI 광고 제작 비용 80% 절감',d:'2026-03-19',s:'디지털데일리'},{t:'AI 카피라이팅 플랫폼 급성장',d:'2026-03-15',s:'아이뉴스24'}], swot:['O1','W3'], opp:['AI 퍼포먼스 마케팅']},
+    {id:'ws_003', label:'[e] 개인정보 마케팅 규제', cat:'e', freq:89, growth:0.091, isWeak:false, score:41, change:-3, news:[{t:'쿠키 없는 타겟팅 대안 논의',d:'2026-03-10',s:'한국경제'}], swot:['T2'], opp:[]},
+    {id:'ws_004', label:'[t] AI 인플루언서', cat:'t', freq:67, growth:0.134, isWeak:false, score:58, change:5, news:[{t:'가상 인플루언서 광고 효과 검증',d:'2026-03-12',s:'머니투데이'}], swot:['O1'], opp:[]},
+    {id:'ws_005', label:'[n] 탈광고 소비자', cat:'n', freq:44, growth:0.062, isWeak:false, score:34, change:-2, news:[], swot:['T4'], opp:[]},
+    {id:'ws_006', label:'[e] ESG 광고 규제', cat:'e', freq:56, growth:0.041, isWeak:false, score:28, change:1, news:[], swot:['T2'], opp:[]},
+    {id:'ws_007', label:'[t] 숏폼 커머스', cat:'t', freq:34, growth:0.193, isWeak:true, score:74, change:11, news:[{t:'틱톡 쇼핑 국내 론칭 임박',d:'2026-03-19',s:'아이뉴스24'}], swot:['O2','W3'], opp:['AI 크리에이티브 자동화']},
+    {id:'ws_008', label:'[n] 감성 소비 리바이벌', cat:'n', freq:39, growth:0.171, isWeak:true, score:67, change:9, news:[{t:'Y2K 감성 마케팅 효과 분석',d:'2026-03-17',s:'마케팅위크'}], swot:['O4'], opp:[]},
+    {id:'ws_009', label:'[e] 개인정보 비동의 마케팅', cat:'e', freq:72, growth:0.088, isWeak:false, score:41, change:2, news:[], swot:['T2'], opp:[]},
+    {id:'ws_010', label:'[t] AI 모델 광고 출연', cat:'t', freq:27, growth:0.154, isWeak:false, score:55, change:7, news:[{t:'AI 가상모델 광고 법적 검토 본격화',d:'2026-03-14',s:'법률신문'}], swot:['O1','W2'], opp:[]}
+  ],
+  북미: [
+    {id:'ws_101', label:'[t] Retail Media AI', cat:'t', freq:38, growth:0.241, isWeak:true, score:71, change:7, news:[{t:'Amazon Ads AI bidding expansion',d:'2026-03-21',s:'AdAge'},{t:'Walmart Connect doubles AI inventory',d:'2026-03-18',s:'Marketing Dive'}], swot:['O2','W3'], opp:['Retail Media AI 자동화']},
+    {id:'ws_102', label:'[n] Attention Economy', cat:'n', freq:52, growth:0.156, isWeak:true, score:64, change:8, news:[{t:'Attention metrics replace viewability',d:'2026-03-17',s:'WARC'}], swot:['O4'], opp:[]},
+    {id:'ws_103', label:'[e] AI Ad Disclosure', cat:'e', freq:94, growth:0.088, isWeak:false, score:43, change:3, news:[], swot:['T2'], opp:[]},
+    {id:'ws_104', label:'[t] Programmatic CTV', cat:'t', freq:78, growth:0.071, isWeak:false, score:37, change:2, news:[], swot:['O3'], opp:[]},
+    {id:'ws_105', label:'[n] Creator Economy 2.0', cat:'n', freq:29, growth:0.228, isWeak:true, score:69, change:13, news:[{t:'Micro-creator B2B partnerships surge',d:'2026-03-20',s:'Marketing Dive'}], swot:['O1','O3'], opp:['McKinney AI Creative']},
+    {id:'ws_106', label:'[t] AI Video Personalization', cat:'t', freq:44, growth:0.197, isWeak:true, score:73, change:10, news:[{t:'Personalized video ads lift CTR by 38%',d:'2026-03-18',s:'AdAge'}], swot:['O1','W3'], opp:['Retail Media AI 자동화']},
+    {id:'ws_107', label:'[e] State-level AI Laws', cat:'e', freq:61, growth:0.112, isWeak:false, score:48, change:5, news:[], swot:['T2'], opp:[]},
+    {id:'ws_108', label:'[n] Brand Safety Premium', cat:'n', freq:83, growth:0.064, isWeak:false, score:35, change:1, news:[], swot:['O4'], opp:[]},
+    {id:'ws_109', label:'[t] In-game Advertising', cat:'t', freq:36, growth:0.143, isWeak:false, score:52, change:4, news:[], swot:['O3'], opp:[]}
+  ],
+  유럽: [
+    {id:'ws_201', label:'[e] EU AI법 크리에이티브', cat:'e', freq:22, growth:0.312, isWeak:true, score:68, change:15, news:[{t:'EU AI Act Article 50 Creative Obligations',d:'2026-03-20',s:'Politico'},{t:'AI-generated ads labeling requirements',d:'2026-03-16',s:'Campaign UK'}], swot:['O4','W3'], opp:['컴플라이언스 크리에이티브']},
+    {id:'ws_202', label:'[n] 지속가능 광고', cat:'n', freq:61, growth:0.143, isWeak:true, score:59, change:6, news:[{t:'Green ad standards push in EU',d:'2026-03-14',s:'Campaign EU'}], swot:['O4'], opp:[]},
+    {id:'ws_203', label:'[t] Cookieless Targeting', cat:'t', freq:108, growth:0.067, isWeak:false, score:39, change:1, news:[], swot:['T2'], opp:[]},
+    {id:'ws_204', label:'[e] GDPR 2.0 강화', cat:'e', freq:134, growth:0.051, isWeak:false, score:32, change:-1, news:[], swot:['T2'], opp:[]},
+    {id:'ws_205', label:'[n] Luxury Digital Shift', cat:'n', freq:31, growth:0.218, isWeak:true, score:71, change:12, news:[{t:'Luxury brands double digital ad spend',d:'2026-03-19',s:'Campaign EU'}], swot:['O3'], opp:['BYD 유럽 캠페인']},
+    {id:'ws_206', label:'[t] Connected TV EU', cat:'t', freq:47, growth:0.176, isWeak:true, score:63, change:8, news:[{t:'CTV penetration hits 62% in Western Europe',d:'2026-03-17',s:'WARC'}], swot:['O2','W3'], opp:['컴플라이언스 크리에이티브']},
+    {id:'ws_207', label:'[e] Carbon Ad Tax 논의', cat:'e', freq:19, growth:0.267, isWeak:true, score:61, change:14, news:[{t:'France proposes carbon tax on digital ads',d:'2026-03-15',s:'Politico'}], swot:['O4'], opp:[]},
+    {id:'ws_208', label:'[n] 문화적 다양성 마케팅', cat:'n', freq:55, growth:0.098, isWeak:false, score:44, change:3, news:[], swot:['O4'], opp:[]},
+    {id:'ws_209', label:'[t] Retail Media EU', cat:'t', freq:42, growth:0.131, isWeak:false, score:51, change:5, news:[], swot:['O2'], opp:[]}
+  ]
+};
+
+const OPP_DATA = {
+  국내: [
+    {id:'opp_001', label:'AI 퍼포먼스 마케팅', imp:9.2, sat:2.1, score:16.3, social:[{t:'AI 기반 마케팅 ROI 측정이 시급하다는 의견 다수',p:'LinkedIn'},{t:'퍼포먼스 마케팅 자동화 솔루션 없어서 수동 작업 중',p:'Reddit'}], sentiment:{pos:0.22,neu:0.31,neg:0.47}, strength:['S4 DnA센터'], signal:['생성형AI 광고']},
+    {id:'opp_002', label:'Z세대 취약성 콘텐츠', imp:7.8, sat:3.2, score:12.4, social:[{t:'진정성 있는 브랜드 콘텐츠 수요 급증',p:'TikTok'},{t:'완벽한 광고보다 리얼한 스토리에 반응',p:'Instagram'}], sentiment:{pos:0.54,neu:0.28,neg:0.18}, strength:['S1 과점지위'], signal:['취약성 마케팅']},
+    {id:'opp_003', label:'AI 크리에이티브 자동화', imp:8.5, sat:3.8, score:13.2, social:[{t:'광고 소재 A/B 테스트 자동화 필요',p:'LinkedIn'}], sentiment:{pos:0.41,neu:0.35,neg:0.24}, strength:['S4 CopyJoe·ContiJoe'], signal:['생성형AI 광고']},
+    {id:'opp_004', label:'삼성 비계열 영업', imp:6.2, sat:5.1, score:7.3, social:[], sentiment:{pos:0.38,neu:0.42,neg:0.20}, strength:['S1','S2'], signal:[]},
+    {id:'opp_005', label:'마케팅 컨설팅 강화', imp:7.1, sat:4.8, score:9.4, social:[{t:'에이전시에 전략 컨설팅 역량 요구 증가',p:'LinkedIn'}], sentiment:{pos:0.48,neu:0.32,neg:0.20}, strength:['S3 M&A자산'], signal:['취약성 마케팅']},
+    {id:'opp_006', label:'숏폼 영상 광고 자동화', imp:8.1, sat:2.8, score:13.4, social:[{t:'숏폼 광고 소재 제작 속도 경쟁 심화',p:'LinkedIn'},{t:'TikTok 광고 자동화 수요 폭발',p:'Twitter'}], sentiment:{pos:0.31,neu:0.28,neg:0.41}, strength:['S4 CopyJoe'], signal:['숏폼 커머스']},
+    {id:'opp_007', label:'데이터 클린룸 서비스', imp:7.4, sat:3.1, score:11.7, social:[{t:'삼성 1st party 데이터 활용 방안 논의',p:'LinkedIn'}], sentiment:{pos:0.39,neu:0.35,neg:0.26}, strength:['S3 ColorData'], signal:['개인정보 비동의 마케팅']},
+    {id:'opp_008', label:'AI 모델 캐스팅 서비스', imp:6.7, sat:6.2, score:7.2, social:[], sentiment:{pos:0.55,neu:0.28,neg:0.17}, strength:['S4 ContiJoe'], signal:['AI 모델 광고 출연']},
+    {id:'opp_009', label:'소형 브랜드 광고 자동화', imp:3.4, sat:2.1, score:4.7, social:[], sentiment:{pos:0.41,neu:0.38,neg:0.21}, strength:['S4 CopyJoe'], signal:[]},
+    {id:'opp_010', label:'라디오·팟캐스트 광고', imp:2.8, sat:3.5, score:2.1, social:[], sentiment:{pos:0.45,neu:0.40,neg:0.15}, strength:['S1 과점지위'], signal:[]},
+    {id:'opp_011', label:'프린트 디지털 전환', imp:2.2, sat:4.8, score:-0.4, social:[], sentiment:{pos:0.52,neu:0.32,neg:0.16}, strength:[], signal:[]},
+    {id:'opp_012', label:'이벤트 마케팅 AI', imp:3.9, sat:4.1, score:3.7, social:[], sentiment:{pos:0.48,neu:0.33,neg:0.19}, strength:['S1 과점지위'], signal:[]}
+  ],
+  북미: [
+    {id:'opp_101', label:'Retail Media AI 자동화', imp:8.8, sat:2.4, score:15.2, social:[{t:'Retail media buying still manual at most agencies',p:'Reddit'},{t:'AI-powered retail media optimization needed',p:'LinkedIn'}], sentiment:{pos:0.19,neu:0.38,neg:0.43}, strength:['S3 아이리스'], signal:['Retail Media AI']},
+    {id:'opp_102', label:'McKinney AI Creative', imp:7.4, sat:4.2, score:11.0, social:[{t:'McKinney known for creative quality',p:'LinkedIn'}], sentiment:{pos:0.52,neu:0.31,neg:0.17}, strength:['S3 McKinney'], signal:[]},
+    {id:'opp_103', label:'Hispanic Market Growth', imp:6.8, sat:3.9, score:9.7, social:[], sentiment:{pos:0.45,neu:0.35,neg:0.20}, strength:['O3 신흥시장'], signal:[]},
+    {id:'opp_104', label:'AI Video Personalization', imp:8.4, sat:2.6, score:14.2, social:[{t:'Brands want 1:1 personalized video at scale',p:'LinkedIn'},{t:'Current video ad tools lack AI personalization',p:'Reddit'}], sentiment:{pos:0.21,neu:0.32,neg:0.47}, strength:['S4 ContiJoe'], signal:['AI Video Personalization']},
+    {id:'opp_105', label:'Creator Economy B2B', imp:7.2, sat:3.6, score:10.8, social:[{t:'Micro-influencer partnerships underpriced',p:'LinkedIn'}], sentiment:{pos:0.48,neu:0.33,neg:0.19}, strength:['S3 McKinney'], signal:['Creator Economy 2.0']},
+    {id:'opp_106', label:'CTV Programmatic', imp:7.9, sat:3.3, score:12.5, social:[{t:'CTV buying still fragmented across agencies',p:'Reddit'}], sentiment:{pos:0.27,neu:0.38,neg:0.35}, strength:['S3 Atom42'], signal:['Programmatic CTV']},
+    {id:'opp_107', label:'Brand Safety AI', imp:6.5, sat:5.4, score:7.6, social:[], sentiment:{pos:0.51,neu:0.32,neg:0.17}, strength:['S4 AI솔루션'], signal:['Brand Safety Premium']},
+    {id:'opp_108', label:'In-game Advertising', imp:3.6, sat:3.2, score:4.0, social:[], sentiment:{pos:0.43,neu:0.37,neg:0.20}, strength:[], signal:['In-game Advertising']},
+    {id:'opp_109', label:'Podcast Ad Automation', imp:2.9, sat:4.4, score:1.4, social:[], sentiment:{pos:0.51,neu:0.34,neg:0.15}, strength:[], signal:[]},
+    {id:'opp_110', label:'Print-to-Digital', imp:2.1, sat:5.2, score:-1.0, social:[], sentiment:{pos:0.55,neu:0.30,neg:0.15}, strength:[], signal:[]},
+    {id:'opp_111', label:'Small Brand AI Suite', imp:3.3, sat:2.8, score:3.8, social:[], sentiment:{pos:0.44,neu:0.36,neg:0.20}, strength:['S4 AI솔루션'], signal:[]}
+  ],
+  유럽: [
+    {id:'opp_201', label:'컴플라이언스 크리에이티브', imp:8.3, sat:1.8, score:14.8, social:[{t:'Brands scrambling for AI Act compliance',p:'LinkedIn'},{t:'EU AI labeling cost is significant burden',p:'Reddit'}], sentiment:{pos:0.15,neu:0.29,neg:0.56}, strength:['S4 AI솔루션'], signal:['EU AI법 크리에이티브']},
+    {id:'opp_202', label:'지속가능 광고 인증', imp:7.6, sat:3.4, score:11.8, social:[{t:'Green advertising standards gaining traction',p:'LinkedIn'}], sentiment:{pos:0.47,neu:0.33,neg:0.20}, strength:['S3 Iris'], signal:['지속가능 광고']},
+    {id:'opp_203', label:'BYD 유럽 캠페인', imp:8.1, sat:4.5, score:11.7, social:[{t:'BYD needs localised European messaging',p:'LinkedIn'}], sentiment:{pos:0.38,neu:0.42,neg:0.20}, strength:['S3 M&A자산'], signal:[]},
+    {id:'opp_204', label:'Luxury Digital 전략', imp:7.8, sat:2.9, score:12.7, social:[{t:'Luxury brands need cultural nuance in digital',p:'LinkedIn'},{t:'LVMH digital agency model failing',p:'Reddit'}], sentiment:{pos:0.22,neu:0.35,neg:0.43}, strength:['S3 Iris'], signal:['Luxury Digital Shift']},
+    {id:'opp_205', label:'CTV 유럽 현지화', imp:7.3, sat:3.2, score:11.4, social:[{t:'European CTV ad market lacks local expertise',p:'LinkedIn'}], sentiment:{pos:0.31,neu:0.39,neg:0.30}, strength:['S3 Iris'], signal:['Connected TV EU']},
+    {id:'opp_206', label:'Carbon-neutral 광고', imp:6.4, sat:4.1, score:8.7, social:[], sentiment:{pos:0.44,neu:0.36,neg:0.20}, strength:['O4 컨설팅'], signal:['Carbon Ad Tax 논의']},
+    {id:'opp_207', label:'Multi-market AI 크리에이티브', imp:8.6, sat:2.2, score:15.0, social:[{t:'Pan-European campaigns need AI localization',p:'LinkedIn'},{t:'Current translation tools miss cultural context',p:'Reddit'}], sentiment:{pos:0.18,neu:0.27,neg:0.55}, strength:['S4 CopyJoe'], signal:['EU AI법 크리에이티브']},
+    {id:'opp_208', label:'Regional Press Digital', imp:2.5, sat:3.9, score:1.1, social:[], sentiment:{pos:0.49,neu:0.35,neg:0.16}, strength:[], signal:[]},
+    {id:'opp_209', label:'Event Sponsorship AI', imp:3.7, sat:4.3, score:3.1, social:[], sentiment:{pos:0.47,neu:0.35,neg:0.18}, strength:['S1 과점지위'], signal:[]},
+    {id:'opp_210', label:'Radio & Podcast EU', imp:2.8, sat:5.1, score:0.5, social:[], sentiment:{pos:0.53,neu:0.32,neg:0.15}, strength:[], signal:[]},
+    {id:'opp_211', label:'Niche B2B Content', imp:3.2, sat:2.6, score:3.8, social:[], sentiment:{pos:0.42,neu:0.38,neg:0.20}, strength:[], signal:[]}
+  ]
+};
+
+const ONTOLOGY_DATA = {
+  nodes: [
+    // 강점 (Strength)
+    {id:'S1',type:'strength',label:'국내 과점 지위',desc:'국내 광고대행 시장 점유율 1위. 삼성 계열 물량으로 형성된 진입장벽이 높은 구조적 강점.',region:'all'},
+    {id:'S2',type:'strength',label:'현금 4,700억',desc:'2024년 기준 순현금 4,700억원 보유. M&A 및 AI 투자에 즉시 활용 가능한 재무 기반.',region:'all'},
+    {id:'S3',type:'strength',label:'M&A 디지털 자산',desc:'McKinney(북미), Iris(유럽) 등 해외 자회사 및 AI 스타트업 지분 보유.',region:'all'},
+    {id:'S4',type:'strength',label:'CopyJoe·ContiJoe',desc:'국내 최초 광고 특화 생성형AI 도구. 텍스트·이미지 생성 영역에서 내부 생산성 증가.',region:'all'},
+    // 약점 (Weakness)
+    {id:'W1',type:'weakness',label:'삼성 의존도 71%',desc:'매출의 71%가 삼성 계열사에서 발생. 클라이언트 다변화 부재로 수익 구조 취약.',region:'all'},
+    {id:'W2',type:'weakness',label:'AI 전략 실행 격차',desc:'AI 전략 수립은 완료되었으나 실제 실행 속도가 경쟁사 대비 18개월 지연.',region:'all'},
+    {id:'W3',type:'weakness',label:'가치사슬 AI 공백',desc:'퍼포먼스 최적화·미디어 바잉·데이터 분석 등 핵심 가치사슬에 AI 도구 부재.',region:'all'},
+    {id:'W4',type:'weakness',label:'AI 투자 실행 지연',desc:'이사회 승인된 AI 투자 계획이 실행 단계에서 지연되는 거버넌스 이슈.',region:'all'},
+    // 기회 (Opportunity)
+    {id:'O1',type:'opportunity',label:'생성형AI 광고시장',desc:'2032년 1,924억 달러 규모 전망. 현재 초기 시장 선점 가능한 황금 창(窓).',region:'all'},
+    {id:'O2',type:'opportunity',label:'리테일 미디어',desc:'Amazon·Walmart 등 리테일 미디어 시장 1,795억 달러 돌파. AI 자동화 수요 급증.',region:'all'},
+    {id:'O3',type:'opportunity',label:'신흥시장 성장',desc:'북미·유럽 비계열 광고주 시장 진입 기회. 해외 자회사를 통한 교두보 확보 가능.',region:'북미'},
+    {id:'O5',type:'opportunity',label:'AI M&A 기회창',desc:'AI 스타트업 밸류에이션 조정기. 생성형AI·미디어테크 분야 전략적 인수 적기.',region:'all'},
+    // 위협 (Threat)
+    {id:'T1',type:'threat',label:'WPP 경로 리스크',desc:'WPP의 시총 87% 소멸은 AI 대응 지연 시 대형 에이전시도 몰락 가능함을 증명.',region:'all'},
+    {id:'T2',type:'threat',label:'빅테크 직접 집행',desc:'Google·Meta·Amazon이 광고주에게 직접 AI 광고 도구를 제공하며 에이전시 역할 잠식.',region:'all'},
+    {id:'T3',type:'threat',label:'Publicis AI 독주',desc:'Publicis의 AI 수주 실적이 WPP 대비 2배. 글로벌 AI 광고 표준을 선점 중.',region:'all'},
+    // 약신호 (Signal)
+    {id:'WS1',type:'signal',label:'생성형AI 광고',desc:'소셜에서 AI 생성 광고 크리에이티브 관련 논의 급증. 광고주의 직접 도입 사례 증가.',region:'all'},
+    {id:'WS2',type:'signal',label:'Retail Media AI',desc:'에이전시의 수동 리테일 미디어 운영 한계에 대한 불만이 소셜·포럼에서 다수 감지.',region:'북미'},
+    {id:'WS3',type:'signal',label:'EU AI법 시행',desc:'EU AI법 크리에이티브 공개 의무화 시행 임박. 유럽 광고주의 컴플라이언스 수요 급증.',region:'유럽'},
+    {id:'WS4',type:'signal',label:'취약성 마케팅',desc:'Z세대 대상 불완전함을 드러내는 진정성 마케팅 트렌드. 기존 광고 대비 호감도 +43%.',region:'all'},
+    // 역량 개념 (Concept)
+    {id:'CREATIVE',type:'concept',label:'크리에이티브 자동화',desc:'생성형AI를 활용한 광고 크리에이티브 제작 자동화. 텍스트·이미지·영상 생성 포함.',region:'all'},
+    {id:'AI_ADV',type:'concept',label:'AI 광고 플랫폼',desc:'AI 기반 광고 집행·최적화 플랫폼. 퍼포먼스 마케팅과 크리에이티브 생성을 통합.',region:'all'},
+    {id:'RETAIL_M',type:'concept',label:'리테일 미디어 AI',desc:'Amazon·Walmart 등 리테일 미디어의 AI 자동화 바잉·최적화 서비스.',region:'all'},
+    {id:'DATA_INT',type:'concept',label:'데이터 통합',desc:'광고 성과 데이터·소비자 행동 데이터·미디어 집행 데이터를 통합 분석하는 인프라.',region:'all'},
+    {id:'COMP_OBL',type:'concept',label:'AI 컴플라이언스',desc:'EU AI법 등 규제 환경에서 광고 크리에이티브의 법적 요건 충족을 보장하는 서비스.',region:'all'},
+    {id:'PERF_OPT',type:'concept',label:'퍼포먼스 최적화',desc:'AI 기반 광고 입찰·예산 배분·타겟팅 자동화로 마케팅 ROI를 극대화하는 역량.',region:'all'},
+    {id:'AUDIENCE',type:'concept',label:'오디언스 인텔리전스',desc:'AI 기반 소비자 세분화·행동 예측·개인화 타겟팅 역량.',region:'all'},
+    {id:'MKTG_ROI',type:'concept',label:'마케팅 ROI',desc:'AI 광고 투자 대비 수익률을 실시간으로 측정하고 최적화하는 분석 역량.',region:'all'},
+    // 자산 (Asset)
+    {id:'COPYJOE',type:'asset',label:'CopyJoe AI',desc:'제일기획 자체 개발 텍스트 생성AI. 광고 카피 자동 생성. 현재 영상 생성 기능 부재.',region:'all'},
+    {id:'MCKINNEY',type:'asset',label:'McKinney',desc:'북미 시장 진입 교두보. AI 크리에이티브 파이프라인 구축 착수 중.',region:'북미'},
+    {id:'IRIS',type:'asset',label:'Iris 유럽',desc:'유럽 광고 시장 접근 자산. EU AI법 관련 규제 대응 서비스 제공 가능.',region:'유럽'},
+    // 전략 행동 (Action)
+    {id:'A1',type:'action',label:'AI 크리에이티브 확장',desc:'CopyJoe·ContiJoe를 영상 생성AI로 확장하고 생성형AI 광고 패키지 상품화. 목표: 2026 Q3.',region:'all'},
+    {id:'A2',type:'action',label:'Retail AI 플랫폼',desc:'McKinney 브랜드로 Retail Media AI 자동화 플랫폼 출시. Amazon/Walmart 광고주 타겟.',region:'북미'},
+    {id:'A3',type:'action',label:'EU 컴플라이언스 서비스',desc:'EU AI Act 준수 크리에이티브 가이드라인 수립 후 BYD 유럽 캠페인 시범 적용.',region:'유럽'},
+    {id:'A4',type:'action',label:'AI M&A 실행',desc:'2026 H2 AI 스타트업 인수 실행. 생성형AI 영상·미디어테크 분야 우선 타겟.',region:'all'}
+  ],
+  edges: [
+    // 강점 → 자산/역량
+    {s:'S4',t:'COPYJOE',type:'보유함',str:1.0,label:'보유'},
+    {s:'S2',t:'O5',type:'가능케함',str:0.85,label:'투자 재원'},
+    {s:'S2',t:'A4',type:'가능케함',str:0.9,label:'M&A 자금'},
+    {s:'S3',t:'MCKINNEY',type:'연결됨',str:0.9,label:'해외 자산'},
+    {s:'S3',t:'IRIS',type:'연결됨',str:0.85,label:'해외 자산'},
+    {s:'S1',t:'O1',type:'활용가능',str:0.7,label:'시장 지위'},
+    // 약점 → 위협/공백
+    {s:'W1',t:'T1',type:'유사패턴',str:0.9,label:'과도한 의존'},
+    {s:'W2',t:'T3',type:'격차심화',str:0.8,label:'실행 지연'},
+    {s:'W2',t:'AI_ADV',type:'공백발생',str:0.85,label:'역량 부재'},
+    {s:'W3',t:'CREATIVE',type:'공백발생',str:0.9,label:'자동화 미흡'},
+    {s:'W3',t:'PERF_OPT',type:'공백발생',str:0.85,label:'AI 도구 부재'},
+    {s:'W3',t:'RETAIL_M',type:'공백발생',str:0.8,label:'미디어 AI 부재'},
+    {s:'W4',t:'O5',type:'위험요인',str:0.75,label:'창 좁아짐'},
+    // 기회 → 역량
+    {s:'O1',t:'AI_ADV',type:'성장동인',str:0.9,label:'시장 확대'},
+    {s:'O2',t:'RETAIL_M',type:'성장동인',str:0.9,label:'시장 확대'},
+    {s:'O3',t:'MCKINNEY',type:'진입경로',str:0.75,label:'북미 교두보'},
+    {s:'O5',t:'A4',type:'연결됨',str:0.8,label:'M&A 타이밍'},
+    // 위협 → 약점
+    {s:'T1',t:'W2',type:'경고함',str:0.85,label:'선례 경고'},
+    {s:'T2',t:'AI_ADV',type:'경쟁함',str:0.9,label:'직접 집행'},
+    {s:'T2',t:'PERF_OPT',type:'경쟁함',str:0.8,label:'플랫폼 잠식'},
+    {s:'T3',t:'CREATIVE',type:'경쟁함',str:0.85,label:'AI 크리에이티브'},
+    // 약신호 → 기회/역량
+    {s:'WS1',t:'O1',type:'감지됨',str:0.9,label:'시장 신호'},
+    {s:'WS1',t:'CREATIVE',type:'감지됨',str:0.8,label:'수요 신호'},
+    {s:'WS2',t:'O2',type:'감지됨',str:0.85,label:'시장 신호'},
+    {s:'WS2',t:'RETAIL_M',type:'감지됨',str:0.9,label:'수요 신호'},
+    {s:'WS3',t:'COMP_OBL',type:'촉발됨',str:0.95,label:'규제 수요'},
+    {s:'WS3',t:'IRIS',type:'촉발됨',str:0.7,label:'유럽 기회'},
+    {s:'WS4',t:'AUDIENCE',type:'감지됨',str:0.75,label:'트렌드 신호'},
+    // 역량 상호 의존
+    {s:'AI_ADV',t:'CREATIVE',type:'포함함',str:0.9,label:'크리에이티브 통합'},
+    {s:'AI_ADV',t:'DATA_INT',type:'의존함',str:0.85,label:'데이터 필요'},
+    {s:'AI_ADV',t:'MKTG_ROI',type:'제공함',str:0.8,label:'ROI 측정'},
+    {s:'RETAIL_M',t:'DATA_INT',type:'의존함',str:0.8,label:'데이터 연동'},
+    {s:'RETAIL_M',t:'AUDIENCE',type:'활용함',str:0.85,label:'타겟팅'},
+    {s:'CREATIVE',t:'AUDIENCE',type:'활용함',str:0.75,label:'개인화'},
+    {s:'AUDIENCE',t:'PERF_OPT',type:'강화함',str:0.8,label:'타겟 정밀도'},
+    {s:'DATA_INT',t:'PERF_OPT',type:'가능케함',str:0.85,label:'데이터 기반'},
+    {s:'PERF_OPT',t:'MKTG_ROI',type:'측정함',str:0.9,label:'성과 측정'},
+    // 자산 → 역량
+    {s:'COPYJOE',t:'CREATIVE',type:'지원함',str:0.8,label:'텍스트 생성'},
+    {s:'MCKINNEY',t:'RETAIL_M',type:'운영함',str:0.75,label:'북미 리테일'},
+    {s:'IRIS',t:'COMP_OBL',type:'운영함',str:0.8,label:'규제 대응'},
+    // 전략 행동 → 약점 해결
+    {s:'A1',t:'W3',type:'해결함',str:0.9,label:'AI 역량 확충'},
+    {s:'A1',t:'COPYJOE',type:'확장함',str:0.85,label:'영상AI 추가'},
+    {s:'A1',t:'CREATIVE',type:'강화함',str:0.9,label:'크리에이티브 자동화'},
+    {s:'A2',t:'RETAIL_M',type:'구현함',str:0.9,label:'플랫폼 구축'},
+    {s:'A2',t:'MCKINNEY',type:'활용함',str:0.85,label:'북미 실행'},
+    {s:'A3',t:'COMP_OBL',type:'구현함',str:0.9,label:'서비스 상품화'},
+    {s:'A3',t:'IRIS',type:'활용함',str:0.8,label:'유럽 네트워크'},
+    {s:'A4',t:'W2',type:'해결함',str:0.85,label:'AI 역량 내재화'},
+    {s:'A4',t:'DATA_INT',type:'강화함',str:0.75,label:'인프라 확충'}
+  ]
+};
+
+const FEED_DATA = [
+  {id:'f001',title:'생성형 AI 광고 시장 2032년 1,924억 달러 전망',src:'블룸버그',date:'2026-03-22',region:'북미',type:'뉴스',tags:['[t] 생성형AI 광고','AI 퍼포먼스 마케팅']},
+  {id:'f002',title:'Z세대 마케팅 새 키워드 "취약성" 부상',src:'마케팅위크',date:'2026-03-20',region:'국내',type:'뉴스',tags:['[n] 취약성 마케팅','Z세대 취약성 콘텐츠']},
+  {id:'f003',title:'Publicis 2025년 신규 수주 WPP 대비 2배 성과',src:'AdAge',date:'2026-03-21',region:'북미',type:'뉴스',tags:['T3 Publicis 독주','W2 AI 전략 격차']},
+  {id:'f004',title:'EU AI법 크리에이티브 공개 의무화 시행 임박',src:'Politico',date:'2026-03-20',region:'유럽',type:'뉴스',tags:['[e] EU AI법 크리에이티브','컴플라이언스 크리에이티브']},
+  {id:'f005',title:'AI 기반 마케팅 ROI 측정이 시급하다는 의견 다수',src:'LinkedIn',date:'2026-03-19',region:'국내',type:'소셜',tags:['AI 퍼포먼스 마케팅','W3 가치사슬 공백']},
+  {id:'f006',title:'Amazon Ads AI bidding 기능 확장 발표',src:'AdAge',date:'2026-03-21',region:'북미',type:'뉴스',tags:['[t] Retail Media AI','Retail Media AI 자동화']},
+  {id:'f007',title:'국내 광고 시장 2024년 +2.8% 성장에 그쳐',src:'KOBACO',date:'2026-03-18',region:'국내',type:'뉴스',tags:['T4 국내 성장 둔화']},
+  {id:'f008',title:'Brands scrambling for EU AI Act compliance',src:'LinkedIn',date:'2026-03-20',region:'유럽',type:'소셜',tags:['[e] EU AI법 크리에이티브','컴플라이언스 크리에이티브']},
+  {id:'f009',title:'리테일 미디어 시장 1,795억 달러 돌파',src:'Coresight',date:'2026-03-17',region:'북미',type:'뉴스',tags:['O2 리테일 미디어','Retail Media AI 자동화']},
+  {id:'f010',title:'AI 카피라이팅 플랫폼 급성장, 에이전시 위협',src:'아이뉴스24',date:'2026-03-15',region:'국내',type:'뉴스',tags:['[t] 생성형AI 광고','W3 가치사슬 공백']},
+  {id:'f011',title:'Retail media buying still manual at most agencies',src:'Reddit',date:'2026-03-19',region:'북미',type:'소셜',tags:['[t] Retail Media AI','Retail Media AI 자동화']},
+  {id:'f012',title:'불완전함을 드러내는 브랜드 전략 사례 증가',src:'이투데이',date:'2026-03-18',region:'국내',type:'뉴스',tags:['[n] 취약성 마케팅']},
+  {id:'f013',title:'WPP 시총 87% 소멸 분석: 교훈과 시사점',src:'Financial Times',date:'2026-03-16',region:'북미',type:'뉴스',tags:['T1 WPP 경로','W2 AI 전략 격차']},
+  {id:'f014',title:'McKinney AI 크리에이티브 파이프라인 구축 착수',src:'Campaign US',date:'2026-03-14',region:'북미',type:'뉴스',tags:['O3 신흥시장','S3 M&A 자산']},
+  {id:'f015',title:'퍼포먼스 마케팅 자동화 솔루션 없어서 수동 작업 중',src:'Reddit',date:'2026-03-15',region:'국내',type:'소셜',tags:['AI 퍼포먼스 마케팅','W3 가치사슬 공백']}
+];
+
+// ============================================================
+// FEED DETAIL DATA
+// ============================================================
+const FEED_DETAIL = {
+  f001:{
+    summary:'생성형 AI 광고 시장이 2032년 1,924억 달러(전체 디지털 광고의 13%)에 달할 것으로 전망됩니다. 2027년까지 643억 달러의 시장이 형성되며, 현재 AI 광고 역량을 갖춘 에이전시에게 선점 기회가 집중됩니다.',
+    context:'블룸버그 분석에 따르면 생성형 AI는 광고 제작 비용을 평균 67% 절감하면서 동시에 개인화 수준을 10배 이상 높이는 것으로 나타났습니다. 글로벌 광고주의 78%가 2026년 AI 광고 예산을 전년 대비 2배 이상 확대할 계획입니다.',
+    cheil_impact:'제일기획의 CopyJoe·ContiJoe는 텍스트·이미지 수준에 머물러 있어, 영상·숏폼·다국어 생성형 AI 역량 부재가 이 시장에서의 경쟁력을 제한합니다.',
+    swot:['O1 생성형 AI 광고시장','W3 가치사슬 AI 공백','T3 Publicis AI 독주'],
+    signals:['[t] 생성형AI 광고','[t] AI Video Personalization'],
+    opportunities:['AI 퍼포먼스 마케팅','AI 크리에이티브 자동화'],
+    action:'CopyJoe·ContiJoe를 영상 생성 AI로 기능 확장하고, 생성형 AI 광고 패키지를 2026 Q3 전에 상품화할 것을 권고합니다.',
+    urgency:'high', trend:[28,34,41,52,67,84]
+  },
+  f002:{
+    summary:'Z세대를 중심으로 브랜드의 "취약성(Vulnerability)"을 드러내는 마케팅이 새로운 신뢰 구축 전략으로 부상하고 있습니다. 완벽한 브랜드 이미지보다 불완전함을 인정하는 진정성 있는 소통이 더 높은 구매 전환율을 보입니다.',
+    context:'마케팅위크 조사에 따르면 취약성 마케팅 캠페인은 기존 글로시 광고 대비 Z세대 호감도 +43%, 공유율 +67%를 기록합니다. 국내에서는 배달의민족·무신사 등이 자사 실패 사례를 솔직히 공개하는 캠페인으로 바이럴에 성공했습니다.',
+    cheil_impact:'삼성 MX·소비재 클라이언트의 브랜드 전략 수립 시 취약성 마케팅 콘셉트를 선제 제안할 수 있으며, 이는 제일기획의 컨설팅 역량 차별화 포인트가 됩니다.',
+    swot:['O4 컨설팅 역량 선정 기준화','W2 AI 전략 실행 격차'],
+    signals:['[n] 취약성 마케팅','[n] 감성 소비 리바이벌'],
+    opportunities:['Z세대 취약성 콘텐츠','마케팅 컨설팅 강화'],
+    action:'향후 4주 내 Z세대 타깃 주요 클라이언트 대상 취약성 마케팅 프레임워크 제안서를 선제 제출하고, 파일럿 캠페인 제안을 권고합니다.',
+    urgency:'medium', trend:[12,18,24,33,47,68]
+  },
+  f003:{
+    summary:'Publicis Groupe가 2025년 글로벌 신규 수주에서 WPP 대비 2배의 성과를 기록했습니다. Publicis의 핵심 경쟁력은 AI 전환 완성도(운영 73%, 미디어 80%)로, AI가 에이전시 수주 경쟁의 핵심 변수가 된 것이 확인됩니다.',
+    context:'AdAge 데이터에 따르면 Publicis는 2024-2025년 연속 글로벌 수주 1위를 기록하며 WPP·IPG·Omnicom을 앞섰습니다. WPP는 동 기간 시총이 87% 하락하며 FTSE 100에서 퇴출됐습니다. AI 전환 속도가 에이전시 생존을 가르는 변수로 확인됩니다.',
+    cheil_impact:'제일기획과 WPP의 구조적 유사성(전통 에이전시, 계열사 의존)을 감안할 때, AI 전환 지연은 단순 성장 둔화가 아닌 시총 소멸로 이어질 수 있는 실존적 위기입니다.',
+    swot:['T3 Publicis AI 독주','T1 WPP 경로 리스크','W2 AI 전략 실행 격차'],
+    signals:['[t] 생성형AI 광고'],
+    opportunities:['AI 퍼포먼스 마케팅'],
+    action:'Publicis의 AI 전환 로드맵(Marcel AI 플랫폼, CoreAI)을 벤치마킹하고, 제일기획 AI 전환 2년 로드맵을 2026 Q2 이사회에 상정할 것을 권고합니다.',
+    urgency:'critical', trend:[55,58,62,69,78,88]
+  },
+  f004:{
+    summary:'EU AI법(AI Act) Article 50에 따라 AI 생성 광고 콘텐츠에 대한 명시적 표기 의무가 2026년 하반기 시행됩니다. 비준수 시 전 세계 매출의 3% 또는 1,500만 유로 중 높은 금액의 과징금이 부과됩니다.',
+    context:'Politico 보도에 따르면 EU 회원국 광고주의 61%가 AI Act 컴플라이언스 준비가 미흡하다고 응답했습니다. 특히 멀티마켓 캠페인에서 각국 언어별 AI 표기 요건이 상이하여 전문 에이전시 수요가 급증 중입니다.',
+    cheil_impact:'유럽에 진출한 한국 브랜드(삼성, 현대, BYD 등)는 EU AI법 컴플라이언스가 필수입니다. 제일기획의 Iris 유럽 자회사가 컴플라이언스 크리에이티브 서비스를 선점할 경우 즉시 수주 가능한 파이프라인이 형성됩니다.',
+    swot:['O4 컨설팅 역량 선정 기준화','W3 가치사슬 AI 공백','S3 M&A 디지털 자산'],
+    signals:['[e] EU AI법 크리에이티브','[e] GDPR 2.0 강화'],
+    opportunities:['컴플라이언스 크리에이티브','Multi-market AI 크리에이티브'],
+    action:'EU AI Act 크리에이티브 컴플라이언스 가이드라인을 Iris 중심으로 즉시 수립하고, BYD·삼성 유럽 캠페인에 시범 적용 후 서비스 상품화를 권고합니다.',
+    urgency:'critical', trend:[8,14,22,35,52,73]
+  },
+  f005:{
+    summary:'국내 마케터의 73%가 AI 기반 마케팅 ROI 측정 자동화를 "긴급 과제"로 꼽았으나, 현재 이를 제공하는 에이전시는 5% 미만입니다. 광고주의 AI 퍼포먼스 마케팅 수요와 에이전시 공급 사이의 격차가 가장 큰 미충족 영역입니다.',
+    context:'LinkedIn 서베이 기반 분석에 따르면 AI 퍼포먼스 마케팅 솔루션을 보유한 에이전시는 비보유 에이전시 대비 수주 전환율이 2.3배 높습니다. 특히 퍼포먼스 캠페인 자동 최적화, 멀티채널 어트리뷰션, AI 예측 입찰의 3가지 기능이 핵심 선택 기준입니다.',
+    cheil_impact:'제일기획 DnA센터의 데이터 역량을 AI 퍼포먼스 최적화 서비스로 패키징하면 국내 비계열 광고주 영업에서 즉시 차별화 포인트를 만들 수 있습니다.',
+    swot:['O1 생성형 AI 광고시장','W3 가치사슬 AI 공백','S4 CopyJoe·ContiJoe'],
+    signals:['[t] 생성형AI 광고','[n] 취약성 마케팅'],
+    opportunities:['AI 퍼포먼스 마케팅','데이터 클린룸 서비스'],
+    action:'DnA센터를 중심으로 AI 퍼포먼스 마케팅 전용 서비스 라인업을 2026 Q2 내 출시하고, 비계열 광고주 파이프라인 구축을 최우선 과제로 설정할 것을 권고합니다.',
+    urgency:'high', trend:[22,29,37,48,61,79]
+  },
+  f006:{
+    summary:'Amazon Advertising이 AI 자동 입찰 기능(Performance+)을 전 카테고리로 확장하며, 에이전시 없이 광고주가 직접 AI 최적화 캠페인을 운영할 수 있는 환경이 완성되고 있습니다. Walmart Connect도 동일한 방향으로 이동 중입니다.',
+    context:'이 움직임은 미디어 집행 단계에서 에이전시의 부가가치를 직접적으로 위협합니다. 2025년 기준 Amazon Ads 자동화 캠페인의 ROAS는 수동 캠페인 대비 평균 31% 높아, 광고주들의 직접 집행 유인이 강해지고 있습니다.',
+    cheil_impact:'리테일 미디어 집행 수수료 수익이 감소 압력을 받고 있으며, 이를 상쇄하기 위해서는 빅테크가 제공하지 못하는 전략·크리에이티브·데이터 인사이트 영역으로 포지션을 이동해야 합니다.',
+    swot:['T2 빅테크 직접 집행','W3 가치사슬 AI 공백','O2 리테일 미디어'],
+    signals:['[t] Retail Media AI'],
+    opportunities:['Retail Media AI 자동화','데이터 클린룸 서비스'],
+    action:'리테일 미디어 미디어 집행보다 상위 레이어인 "리테일 미디어 전략 컨설팅"으로 포지션을 전환하고, Amazon/Walmart 데이터 인사이트 분석 서비스를 신규 수익원으로 개발할 것을 권고합니다.',
+    urgency:'high', trend:[31,38,46,55,66,79]
+  },
+  f007:{
+    summary:'국내 광고 시장이 2024년 +2.8% 성장에 그쳤습니다. 경기 침체, 정치 불안정, 디지털 광고 단가 하락이 복합적으로 작용하며 성장 정체가 2026년에도 지속될 전망입니다.',
+    context:'KOBACO 자료에 따르면 국내 광고 시장 중 TV·인쇄 등 전통 미디어는 -8.2% 역성장했고, 디지털만 +9.1% 성장했으나 단가 하락으로 실질 수익 증가는 제한적입니다. 에이전시들은 단가를 낮춘 경쟁 PT에도 참여하는 구조가 고착화되고 있습니다.',
+    cheil_impact:'국내 시장 성장 정체는 제일기획의 삼성 의존도(71%) 구조와 결합해 수익성 압박을 가중시킵니다. 해외 시장(북미·유럽·신흥시장) 비중 확대가 구조적 해법입니다.',
+    swot:['T4 국내 광고시장 성장 둔화','W1 삼성 의존도 71%','O3 신흥시장 성장'],
+    signals:['[e] ESG 광고 규제','[n] 탈광고 소비자'],
+    opportunities:['삼성 비계열 영업','마케팅 컨설팅 강화'],
+    action:'국내 수익 의존도를 2028년까지 50% 이하로 낮추는 글로벌 포트폴리오 전략을 수립하고, 단기적으로는 비계열 국내 광고주 수주 집중을 권고합니다.',
+    urgency:'medium', trend:[72,70,68,65,63,61]
+  },
+  f008:{
+    summary:'유럽 브랜드들이 EU AI법 컴플라이언스 준비에 어려움을 겪으며 전문 에이전시 수요가 급증하고 있습니다. 특히 AI 생성 콘텐츠의 공개 의무, 딥페이크 광고 금지, 감정 인식 AI 광고 제한 등 세부 조항 해석에 전문 법무·크리에이티브 지식이 동시에 필요합니다.',
+    context:'LinkedIn 포스트 분석 결과, EU AI Act 관련 마케팅 담당자 문의가 2025년 대비 340% 증가했습니다. 컨설팅 펌은 컴플라이언스 자문에 집중하고 있어, 자문+실제 크리에이티브 제작을 원스톱으로 제공하는 에이전시는 극히 드뭅니다.',
+    cheil_impact:'Iris 유럽 자회사의 법무·크리에이티브 통합 서비스가 이 수요를 포착할 수 있습니다. BYD 유럽 캠페인이 레퍼런스 케이스가 될 수 있습니다.',
+    swot:['O4 컨설팅 역량 선정 기준화','S3 M&A 디지털 자산'],
+    signals:['[e] EU AI법 크리에이티브','[e] Carbon Ad Tax 논의'],
+    opportunities:['컴플라이언스 크리에이티브','Multi-market AI 크리에이티브'],
+    action:'EU AI Act 컴플라이언스 원스톱 서비스(자문+제작+검증)를 Iris 브랜드로 출시하고, 유럽 진출 한국 기업을 1차 타깃으로 영업을 집중할 것을 권고합니다.',
+    urgency:'critical', trend:[6,11,18,29,46,68]
+  },
+  f009:{
+    summary:'글로벌 리테일 미디어 시장이 2025년 1,795억 달러를 돌파하며 YoY +15.4% 성장했습니다. 2028년까지 두 자릿수 성장이 유지될 전망으로, 디지털 광고 시장에서 가장 빠르게 성장하는 세그먼트입니다.',
+    context:'Coresight 분석에 따르면 리테일 미디어의 성장은 1st party 데이터의 가치 상승과 직결됩니다. 쿠키 없는 환경에서 리테일러의 구매 데이터가 가장 정확한 타겟팅 수단이 되면서, 리테일 미디어 광고 단가가 일반 디스플레이 대비 3.2배 높아졌습니다.',
+    cheil_impact:'삼성닷컴·삼성스토어가 리테일 미디어 플랫폼으로 전환될 경우, 제일기획이 운영 에이전시 역할을 맡을 수 있는 구조적 기회가 있습니다. 또한 비계열 리테일러와의 제휴도 가능합니다.',
+    swot:['O2 리테일 미디어 구조적 성장','S3 M&A 디지털 자산','W3 가치사슬 AI 공백'],
+    signals:['[t] Retail Media AI'],
+    opportunities:['Retail Media AI 자동화','데이터 클린룸 서비스'],
+    action:'삼성닷컴 리테일 미디어 운영 에이전시 포지션을 선점하고, 동시에 국내 이커머스 플랫폼(쿠팡·네이버쇼핑) 리테일 미디어 서비스 파트너십을 타진할 것을 권고합니다.',
+    urgency:'high', trend:[35,44,54,65,78,92]
+  },
+  f010:{
+    summary:'AI 카피라이팅·이미지 생성 플랫폼이 급성장하며 에이전시의 기초 크리에이티브 작업을 대체하고 있습니다. 그러나 전략적 방향성 수립, 문화적 맥락 이해, 브랜드 일관성 관리는 여전히 인간 전문가가 필요한 영역입니다.',
+    context:'아이뉴스24 분석에 따르면 국내 AI 카피라이팅 플랫폼 시장이 전년 대비 420% 성장했습니다. 동시에 에이전시들은 "AI가 만든 콘텐츠의 전략적 방향성 설정" 서비스로 포지션을 이동하고 있습니다.',
+    cheil_impact:'CopyJoe·ContiJoe가 범용 AI 도구들과 경쟁하는 현재 포지셔닝은 위험합니다. 제일기획만의 전략적 인사이트를 AI 산출물에 결합하는 "AI+전략" 패키지로의 전환이 필요합니다.',
+    swot:['T3 Publicis AI 독주','W2 AI 전략 실행 격차','S4 CopyJoe·ContiJoe'],
+    signals:['[t] 생성형AI 광고','[t] AI 모델 광고 출연'],
+    opportunities:['AI 크리에이티브 자동화','AI 퍼포먼스 마케팅'],
+    action:'CopyJoe·ContiJoe를 단독 도구가 아닌 "전략 인텔리전스 플랫폼"의 실행 모듈로 재포지셔닝하고, AI 산출물+전략 컨설팅 번들 상품을 개발할 것을 권고합니다.',
+    urgency:'high', trend:[24,33,45,59,74,88]
+  },
+  f011:{
+    summary:'Retail Media 구매 프로세스가 대부분의 에이전시에서 여전히 수동으로 운영되고 있습니다. AI 자동화 도구 부재로 인한 비효율이 광고주 불만의 주요 원인으로 부상했습니다.',
+    context:'Reddit 마케팅 커뮤니티 분석에 따르면 Retail Media 담당자의 68%가 "AI 자동화 부재로 인한 과도한 수동 작업"을 최대 불만 요소로 꼽았습니다. 현재 Amazon Ads, Walmart Connect, Instacart Ads를 동시에 운영하는 에이전시의 경우 캠페인당 평균 23시간의 수동 작업이 발생합니다.',
+    cheil_impact:'McKinney 자회사가 Retail Media AI 자동화 플랫폼을 선점할 경우, 북미 비계열 광고주 수주의 핵심 차별점이 됩니다. 이는 WPP 경로를 피하는 핵심 전략과도 연결됩니다.',
+    swot:['O2 리테일 미디어 구조적 성장','W3 가치사슬 AI 공백','S3 M&A 디지털 자산'],
+    signals:['[t] Retail Media AI','[t] AI Video Personalization'],
+    opportunities:['Retail Media AI 자동화','CTV Programmatic'],
+    action:'McKinney 내 Retail Media AI 전담팀을 구성하고, Amazon/Walmart 광고 API 통합 자동화 플랫폼 개발에 2026년 예산을 우선 배정할 것을 권고합니다.',
+    urgency:'high', trend:[18,24,32,43,57,71]
+  },
+  f012:{
+    summary:'불완전함을 솔직히 드러내는 브랜드 전략 사례가 국내외에서 성공 사례를 만들어내며 주목받고 있습니다. 전통적인 "완벽한 브랜드" 이미지보다 실패·실수·한계를 인정하는 커뮤니케이션이 MZ세대에게 더 강한 신뢰를 형성합니다.',
+    context:'이투데이 조사에 따르면 취약성 마케팅 캠페인은 일반 광고 대비 댓글 참여율 +234%, 긍정 반응율 +89%를 기록합니다. 배달의민족의 "우리가 틀렸습니다" 캠페인, 무신사의 품질 이슈 공개 대응이 대표 사례입니다.',
+    cheil_impact:'삼성 MX의 Z세대 공략 캠페인에 취약성 마케팅 프레임을 적용할 경우, 기존 갤럭시 광고와 차별화된 바이럴 효과를 기대할 수 있습니다.',
+    swot:['O4 컨설팅 역량 선정 기준화','W2 AI 전략 실행 격차'],
+    signals:['[n] 취약성 마케팅','[n] 감성 소비 리바이벌'],
+    opportunities:['Z세대 취약성 콘텐츠','마케팅 컨설팅 강화'],
+    action:'삼성 MX 담당팀과 협력하여 갤럭시 S25 Z세대 타깃 취약성 마케팅 파일럿 캠페인을 기획하고, 성과 데이터를 기반으로 다른 클라이언트에 확산할 것을 권고합니다.',
+    urgency:'medium', trend:[9,15,23,34,49,67]
+  },
+  f013:{
+    summary:'WPP의 시총이 2017년 222억 달러에서 2025년 29억 달러로 87% 소멸하며 FTSE 100에서 퇴출됐습니다. 분석가들은 AI 전환 실패와 계열사 의존 구조가 핵심 원인이라고 지적합니다. 제일기획과의 구조적 유사성이 경계 신호입니다.',
+    context:'Financial Times 심층 분석에 따르면 WPP는 2019-2022년 AI 투자를 "운영 효율화"에만 집중하며 비즈니스 모델 전환을 하지 않았습니다. 반면 Publicis는 같은 기간 Marcel AI 플랫폼 구축에 3.5억 달러를 투자하며 영업 모델을 전환했습니다.',
+    cheil_impact:'제일기획의 현황 — 삼성 의존도 71%(WPP의 계열사 의존과 유사), AI 도구 수준의 AI 투자(WPP의 초기 실수와 유사) — 은 WPP 경로의 조기 지표일 수 있습니다. 현금 4,700억이 있는 지금이 전환의 마지막 기회입니다.',
+    swot:['T1 WPP 경로 리스크','W1 삼성 의존도 71%','S2 현금 4,700억','W2 AI 전략 실행 격차'],
+    signals:['[t] 생성형AI 광고'],
+    opportunities:['AI 퍼포먼스 마케팅'],
+    action:'WPP 붕괴 타임라인을 제일기획 이사회에 공식 보고하고, "AI 전환 5개년 로드맵"을 2026년 최우선 전략 과제로 격상하며, 현금 4,700억 중 최소 1,000억을 AI M&A에 배정할 것을 긴급 권고합니다.',
+    urgency:'critical', trend:[88,85,79,71,62,51]
+  },
+  f014:{
+    summary:'제일기획 자회사 McKinney가 AI 크리에이티브 파이프라인 구축에 착수했습니다. 북미 독립 에이전시 시장에서 AI 크리에이티브 역량이 수주 경쟁의 핵심 변수로 떠오른 상황에서의 전략적 움직임입니다.',
+    context:'Campaign US에 따르면 McKinney는 자체 AI 크리에이티브 도구 개발보다 외부 AI 스타트업과의 파트너십을 선택했습니다. 이는 빠른 역량 확보와 비용 효율성을 동시에 추구하는 전략입니다. 북미 독립 에이전시의 47%가 AI 크리에이티브 투자를 늘렸습니다.',
+    cheil_impact:'McKinney의 AI 크리에이티브 파이프라인이 제일기획 본사의 CopyJoe·ContiJoe와 통합될 경우, 글로벌 AI 크리에이티브 역량 플랫폼 구축이 가능합니다. 이는 O3(신흥시장 성장)와 연결되는 핵심 실행 수단입니다.',
+    swot:['O3 신흥시장 두 자릿수 성장','S3 M&A 디지털 자산','S4 CopyJoe·ContiJoe'],
+    signals:['[t] AI Video Personalization','[n] Creator Economy 2.0'],
+    opportunities:['McKinney AI Creative','Creator Economy B2B'],
+    action:'McKinney AI 크리에이티브 파이프라인을 제일기획 본사 AI 플랫폼과 통합하는 로드맵을 수립하고, 2026 Q4까지 글로벌 AI 크리에이티브 통합 서비스 출시를 목표로 설정할 것을 권고합니다.',
+    urgency:'medium', trend:[21,28,36,46,58,71]
+  },
+  f015:{
+    summary:'퍼포먼스 마케팅 담당자들이 자동화 솔루션 부재로 인한 과도한 수동 작업을 호소하고 있습니다. 멀티채널 퍼포먼스 마케팅의 AI 자동화 수요가 에이전시 서비스 공급을 크게 초과하고 있는 상황입니다.',
+    context:'Reddit r/PPC 커뮤니티 분석에 따르면 퍼포먼스 마케팅 담당자의 72%가 에이전시에 "AI 자동 최적화"를 요구하고 있으나, 실제로 제공받는 비율은 18%에 불과합니다. 이 격차가 제일기획의 AI 퍼포먼스 마케팅 서비스 진입 기회입니다.',
+    cheil_impact:'제일기획 DnA센터의 데이터 분석 역량에 AI 자동 입찰·최적화 기능을 추가하면 국내 퍼포먼스 마케팅 에이전시 시장에서 즉각적인 경쟁 우위를 확보할 수 있습니다.',
+    swot:['O1 생성형 AI 광고시장','W3 가치사슬 AI 공백','S4 CopyJoe·ContiJoe'],
+    signals:['[t] 생성형AI 광고','[n] 취약성 마케팅'],
+    opportunities:['AI 퍼포먼스 마케팅','데이터 클린룸 서비스'],
+    action:'DnA센터에 AI 퍼포먼스 자동화팀(5인)을 신설하고, 멀티채널 AI 최적화 솔루션 개발에 착수하여 2026 Q3 내 3개 파일럿 클라이언트 확보를 목표로 설정할 것을 권고합니다.',
+    urgency:'high', trend:[25,32,41,52,65,79]
+  }
+};
+
+// ============================================================
+// STATE
+// ============================================================
+let wsRegion = '국내';
+let oppRegion = '국내';
+let ontologyRegion = '전체';
+let feedFilter = '전체';
+let wsChart = null;
+let oppChart = null;
+let wsTrendChart = null;
+let savedBookmarks = {};
+let selectedNodes = [];
+
+// ============================================================
+// TAB SWITCHING
+// ============================================================
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('text-zinc-500'); b.classList.remove('text-zinc-300'); });
+  document.getElementById('tab-' + tabId).classList.add('active');
+  if (btn) { btn.classList.add('active'); btn.classList.remove('text-zinc-500'); btn.classList.add('text-zinc-300'); }
+  if (tabId === 'weaksignal') setTimeout(() => renderWSChart(), 50);
+  if (tabId === 'opportunity') setTimeout(() => renderOppChart(), 50);
+  if (tabId === 'ontology') setTimeout(() => renderOntology(), 50);
+  if (tabId === 'feed') renderFeed();
+  if (tabId === 'swot') renderSWOT();
+}
+
+// ============================================================
+// REFRESH
+// ============================================================
+function handleRefresh() {
+  const icon = document.getElementById('refresh-icon');
+  const label = document.getElementById('refresh-label');
+  icon.classList.add('spinning');
+  label.textContent = '분석 중...';
+  setTimeout(() => {
+    icon.classList.remove('spinning');
+    label.textContent = '새로고침';
+    const now = new Date();
+    document.getElementById('last-updated').textContent =
+      now.toISOString().slice(0,10) + ' ' + now.toTimeString().slice(0,5) + ' 기준';
+  }, 1800);
+}
+
+// ============================================================
+// SWOT RENDER
+// ============================================================
+function renderSWOT() {
+  const types = [{key:'strength',el:'s'},{key:'weakness',el:'w'},{key:'opportunity',el:'o'},{key:'threat',el:'t'}];
+  types.forEach(({key,el}) => {
+    const ul = document.getElementById('swot-'+el+'-list');
+    ul.innerHTML = SWOT_DATA[key].map(item => `
+      <li class="flex items-start justify-between gap-2">
+        <p class="text-xs text-zinc-300 leading-relaxed flex-1">${item.id}: ${item.text}</p>
+        <button class="bookmark-btn text-zinc-600 hover:text-amber-400 shrink-0 mt-0.5 ${savedBookmarks[item.id]?'saved':''}" onclick="openBookmarkModal('${item.id}','${item.text.slice(0,40)}...')">
+          <iconify-icon icon="solar:star-${savedBookmarks[item.id]?'bold':'linear'}"></iconify-icon>
+        </button>
+      </li>`).join('');
+  });
+  const matrix = document.getElementById('strategy-matrix');
+  const colors = {SO:'emerald',ST:'sky',WO:'violet',WT:'rose'};
+  matrix.innerHTML = Object.entries(SWOT_DATA.strategies).map(([k,v]) => `
+    <div class="card p-4 border-${colors[k]}-500/20">
+      <p class="text-xs font-bold text-${colors[k]}-400 mb-1">${k} 전략</p>
+      <p class="text-xs font-semibold text-white mb-1">${v.title}</p>
+      <p class="text-xs text-zinc-400 leading-relaxed">${v.content}</p>
+    </div>`).join('');
+}
+
+function showSWOTDetail(id) {
+  const all = [...SWOT_DATA.strength,...SWOT_DATA.weakness,...SWOT_DATA.opportunity,...SWOT_DATA.threat];
+  const item = all.find(i => i.id === id);
+  if (!item) return;
+  document.getElementById('side-panel-title').textContent = item.id + ' 상세';
+  document.getElementById('side-panel-content').innerHTML = `
+    <p class="text-sm text-zinc-200 leading-relaxed mb-4">${item.text}</p>
+    <p class="text-xs text-zinc-500 uppercase tracking-widest mb-2">근거 출처</p>
+    <div class="space-y-1">${item.sources.map(s=>`<div class="text-xs text-zinc-400 bg-zinc-900 rounded px-3 py-1.5">${s}</div>`).join('')}</div>`;
+  openSidePanel();
+}
+
+// ============================================================
+// WEAK SIGNAL CHART
+// ============================================================
+function renderWSChart() {
+  const data = WS_DATA[wsRegion];
+  const catColor = {e:'rgba(251,191,36,0.8)',n:'rgba(56,189,248,0.8)',t:'rgba(167,139,250,0.8)'};
+  const catColorWeak = {e:'rgba(251,191,36,1)',n:'rgba(56,189,248,1)',t:'rgba(167,139,250,1)'};
+  const avgFreq = data.reduce((s,d)=>s+d.freq,0)/data.length;
+  const avgGrowth = data.reduce((s,d)=>s+d.growth,0)/data.length;
+  if (wsChart) { wsChart.destroy(); wsChart = null; }
+  const ctx = document.getElementById('ws-chart').getContext('2d');
+  wsChart = new Chart(ctx, {
+    type: 'scatter',
+    data: {
+      datasets: [{
+        label: 'keywords',
+        data: data.map(d => ({x:d.freq, y:d.growth, id:d.id, label:d.label, isWeak:d.isWeak, cat:d.cat})),
+        backgroundColor: data.map(d => d.isWeak ? catColorWeak[d.cat] : catColor[d.cat].replace('0.8','0.35')),
+        pointRadius: data.map(d => d.isWeak ? 9 : 5),
+        pointHoverRadius: data.map(d => d.isWeak ? 12 : 7)
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: {display:false},
+        tooltip: {
+          callbacks: {
+            label: ctx => {
+              const d = ctx.raw;
+              return [`${d.label}`, `빈도: ${d.x}`, `증가율: ${(d.y*100).toFixed(1)}%`];
+            }
+          },
+          backgroundColor: '#18181b', titleColor: '#fff', bodyColor: '#a1a1aa',
+          borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1
+        },
+        annotation: {}
+      },
+      scales: {
+        x: {
+          title: {display:true, text:'평균 등장 빈도', color:'#71717a', font:{size:11}},
+          grid: {color:'rgba(255,255,255,0.04)'}, ticks: {color:'#71717a', font:{size:10}}
+        },
+        y: {
+          title: {display:true, text:'시간가중 증가율', color:'#71717a', font:{size:11}},
+          grid: {color:'rgba(255,255,255,0.04)'}, ticks: {color:'#71717a', font:{size:10},
+            callback: v => (v*100).toFixed(0)+'%'}
+        }
+      },
+      onClick: (e, elements) => {
+        if (!elements.length) return;
+        const d = wsChart.data.datasets[0].data[elements[0].index];
+        const kw = WS_DATA[wsRegion].find(k => k.id === d.id);
+        if (kw) showWSDetail(kw);
+      }
+    },
+    plugins: [{
+      id: 'crosshair',
+      afterDraw(chart) {
+        const {ctx, chartArea, scales} = chart;
+        const xPx = scales.x.getPixelForValue(avgFreq);
+        const yPx = scales.y.getPixelForValue(avgGrowth);
+        ctx.save();
+        ctx.setLineDash([4,4]);
+        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(xPx, chartArea.top); ctx.lineTo(xPx, chartArea.bottom); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(chartArea.left, yPx); ctx.lineTo(chartArea.right, yPx); ctx.stroke();
+        ctx.setLineDash([]);
+        // Label weak signal points
+        const data = chart.data.datasets[0].data;
+        data.forEach((d,i) => {
+          if (d.isWeak) {
+            const xp = scales.x.getPixelForValue(d.x);
+            const yp = scales.y.getPixelForValue(d.y);
+            ctx.fillStyle = '#e4e4e7';
+            ctx.font = '10px Pretendard';
+            ctx.fillText(d.label, xp+10, yp-8);
+          }
+        });
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function showWSDetail(kw) {
+  const panel = document.getElementById('ws-drilldown');
+  panel.classList.remove('hidden');
+  document.getElementById('ws-drill-title').textContent = kw.label + ' 드릴다운';
+  document.getElementById('ws-drill-news').innerHTML = kw.news.map(n =>
+    `<div class="text-xs text-zinc-300 bg-zinc-900/60 rounded p-2"><span class="text-zinc-500 mr-1">${n.d}</span>${n.t}<span class="text-zinc-600 ml-1">— ${n.s}</span></div>`
+  ).join('') || '<p class="text-xs text-zinc-600">관련 뉴스 없음</p>';
+  const tags = [...kw.swot.map(s=>`→ ${s}`),...kw.opp.map(o=>`→ ${o}`)];
+  document.getElementById('ws-drill-tags').innerHTML = tags.map(t =>
+    `<span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded px-2 py-0.5">${t}</span>`
+  ).join('');
+  // Trend mini chart
+  if (wsTrendChart) { wsTrendChart.destroy(); wsTrendChart = null; }
+  const tCtx = document.getElementById('ws-trend-chart').getContext('2d');
+  const months = ['10월','11월','12월','1월','2월','3월'];
+  const base = kw.score - 40;
+  const vals = months.map((_,i) => Math.max(5, base + i*8 + Math.random()*5));
+  wsTrendChart = new Chart(tCtx, {
+    type:'line', data:{labels:months, datasets:[{data:vals, borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,0.1)', tension:0.4, fill:true, pointRadius:2}]},
+    options:{responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{x:{ticks:{color:'#71717a',font:{size:9}},grid:{display:false}}, y:{ticks:{color:'#71717a',font:{size:9}},grid:{color:'rgba(255,255,255,0.04)'}}}}
+  });
+  document.getElementById('ws-signal-text').textContent = `${wsRegion} 기준, ${kw.label}이 ${kw.isWeak?'Weak Signal 구간에서 ':''}증가율 ${(kw.growth*100).toFixed(1)}%를 기록하고 있습니다.`;
+}
+
+// ============================================================
+// OPPORTUNITY CHART
+// ============================================================
+function renderOppChart() {
+  const data = OPP_DATA[oppRegion];
+  const avgImp = data.reduce((s,d)=>s+d.imp,0)/data.length;
+  const avgSat = data.reduce((s,d)=>s+d.sat,0)/data.length;
+  const isUnderserved = d => {
+    // Line1: (10,10)→(avgImp,0), Line2: (10,10)→(0,avgSat)
+    const y1 = 10 + (-10/(avgImp-10)) * (d.imp - 10);
+    const y2 = 10 + ((avgSat-10)/(-10)) * (d.imp - 10);
+    return d.sat < y1 && d.sat < y2;
+  };
+  if (oppChart) { oppChart.destroy(); oppChart = null; }
+  const ctx = document.getElementById('opp-chart').getContext('2d');
+  oppChart = new Chart(ctx, {
+    type:'bubble',
+    data:{datasets:[{
+      label:'opportunities',
+      data: data.map(d => ({x:d.imp, y:d.sat, r: Math.max(8, d.score*1.2), id:d.id, label:d.label, under:isUnderserved(d)})),
+      backgroundColor: data.map(d => isUnderserved(d) ? 'rgba(251,146,60,0.75)' : 'rgba(113,113,122,0.45)'),
+      borderColor: data.map(d => isUnderserved(d) ? 'rgba(251,146,60,1)' : 'rgba(113,113,122,0.6)'),
+      borderWidth: 1.5
+    }]},
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{
+        legend:{display:false},
+        tooltip:{
+          callbacks:{label: ctx => {const d=ctx.raw; const o=OPP_DATA[oppRegion].find(i=>i.id===d.id); return o?[o.label,`중요도: ${o.imp}`,`만족도: ${o.sat}`,`기회점수: ${o.score}`]:[];}},
+          backgroundColor:'#18181b', titleColor:'#fff', bodyColor:'#a1a1aa', borderColor:'rgba(255,255,255,0.1)', borderWidth:1
+        }
+      },
+      scales:{
+        x:{min:0,max:10,title:{display:true,text:'중요도 (Importance)',color:'#71717a',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#71717a',font:{size:10}}},
+        y:{min:0,max:10,title:{display:true,text:'만족도 (Satisfaction)',color:'#71717a',font:{size:11}},grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#71717a',font:{size:10}}}
+      },
+      onClick:(e,elements)=>{
+        if (!elements.length) return;
+        const d = oppChart.data.datasets[0].data[elements[0].index];
+        const opp = OPP_DATA[oppRegion].find(o=>o.id===d.id);
+        if (opp) showOppDetail(opp);
+      }
+    },
+    plugins:[{
+      id:'oppLabels',
+      afterDraw(chart){
+        const {ctx, scales} = chart;
+        chart.data.datasets[0].data.forEach(d => {
+          if (d.under) {
+            const xp = scales.x.getPixelForValue(d.x);
+            const yp = scales.y.getPixelForValue(d.y);
+            ctx.save();
+            ctx.fillStyle='#e4e4e7'; ctx.font='10px Pretendard';
+            ctx.fillText(d.label, xp+d.r+4, yp+4);
+            ctx.restore();
+          }
+        });
+      }
+    },{
+      id:'oppZones',
+      beforeDraw(chart){
+        const {ctx, scales} = chart;
+        const data = OPP_DATA[oppRegion];
+        const avgImp = data.reduce((s,d)=>s+d.imp,0)/data.length;
+        const avgSat = data.reduce((s,d)=>s+d.sat,0)/data.length;
+        // 두 점선 모두 (10,10)에서 시작
+        const x10 = scales.x.getPixelForValue(10);   // 축 최대값 10
+        const y10 = scales.y.getPixelForValue(10);   // 축 최대값 10
+        // Line 1: (10,10) → (avgImp, 0) — x축 평균 중요도 방향
+        const avgImpPx = scales.x.getPixelForValue(avgImp);
+        const y0Px    = scales.y.getPixelForValue(0);
+        // Line 2: (10,10) → (0, avgSat) — y축 평균 만족도 방향
+        const x0Px    = scales.x.getPixelForValue(0);
+        const avgSatPx = scales.y.getPixelForValue(avgSat);
+        ctx.save();
+        ctx.setLineDash([5,4]);
+        ctx.strokeStyle='rgba(251,146,60,0.55)'; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.moveTo(x10,y10); ctx.lineTo(avgImpPx,y0Px); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x10,y10); ctx.lineTo(x0Px,avgSatPx); ctx.stroke();
+        ctx.setLineDash([]);
+        // Zone labels
+        ctx.font='10px Pretendard'; ctx.fillStyle='rgba(251,146,60,0.6)';
+        ctx.fillText('Underserved', scales.x.getPixelForValue(6.5), scales.y.getPixelForValue(1.2));
+        ctx.fillStyle='rgba(150,150,150,0.5)';
+        ctx.fillText('Over-served', scales.x.getPixelForValue(0.5), scales.y.getPixelForValue(8.2));
+        ctx.restore();
+      }
+    }]
+  });
+}
+
+function showOppDetail(opp) {
+  const dd = document.getElementById('opp-drilldown');
+  dd.classList.remove('hidden');
+  document.getElementById('opp-drill-title').textContent = opp.label;
+  document.getElementById('opp-drill-social').innerHTML = opp.social.map(s =>
+    `<div class="text-xs text-zinc-300 bg-zinc-900/60 rounded p-2"><span class="text-zinc-500 text-[10px] mr-1">[${s.p}]</span>${s.t}</div>`
+  ).join('') || '<p class="text-xs text-zinc-600">소셜 데이터 없음</p>';
+  const {pos,neu,neg} = opp.sentiment;
+  document.getElementById('opp-drill-sentiment').innerHTML = `
+    <div class="text-xs text-zinc-400 mb-1">감성 분석</div>
+    <div class="flex gap-1 h-2 rounded overflow-hidden">
+      <div style="width:${pos*100}%" class="bg-emerald-400"></div>
+      <div style="width:${neu*100}%" class="bg-zinc-500"></div>
+      <div style="width:${neg*100}%" class="bg-red-400"></div>
+    </div>
+    <div class="flex gap-3 mt-1">
+      <span class="text-[10px] text-emerald-400">긍정 ${(pos*100).toFixed(0)}%</span>
+      <span class="text-[10px] text-zinc-500">중립 ${(neu*100).toFixed(0)}%</span>
+      <span class="text-[10px] text-red-400">부정 ${(neg*100).toFixed(0)}%</span>
+    </div>`;
+  const tags = [...opp.strength.map(s=>`→ ${s}`),...opp.signal.map(s=>`⚡ ${s}`)];
+  document.getElementById('opp-drill-tags').innerHTML = tags.map(t =>
+    `<span class="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 rounded px-2 py-0.5">${t}</span>`
+  ).join('');
+}
+
+// ============================================================
+// REGION SETTERS
+// ============================================================
+function setRegion(type, region, btn) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.region-btn').forEach(b => { b.classList.remove('active','text-white'); b.classList.add('text-zinc-400'); });
+  btn.classList.add('active'); btn.classList.remove('text-zinc-400'); btn.classList.add('text-white');
+  if (type === 'ws') { wsRegion = region; renderWSChart(); updateWSAIPanel(region); }
+  if (type === 'opp') { oppRegion = region; renderOppChart(); updateOppAIPanel(region); }
+}
+
+function updateWSAIPanel(region) {
+  const panels = {
+    국내:{signal:'국내 기준, [n] 취약성 마케팅이 좌상단 Weak Signal 구간에서 가장 높은 증가율(20.8%)을 기록 중입니다.',impact:'브랜드 크리에이티브 전략에 진정성 메시지 방향 전환을 주요 클라이언트에게 선제 제안할 수 있습니다.',action:'향후 4주 내 Z세대 타깃 클라이언트에 취약성 마케팅 적용 캠페인 콘셉트 선제 제출을 권고합니다.'},
+    북미:{signal:'북미 기준, [t] Retail Media AI가 증가율 24.1%로 최상위 Weak Signal입니다. Amazon·Walmart 광고 플랫폼의 AI 자동화가 가속화되고 있습니다.',impact:'McKinney 자회사를 통한 북미 Retail Media AI 서비스 런칭 시 선점 효과가 기대됩니다.',action:'Retail Media AI 자동화 솔루션을 McKinney와 공동 개발하여 북미 비계열 광고주 수주에 활용할 것을 권고합니다.'},
+    유럽:{signal:'유럽 기준, [e] EU AI법 크리에이티브가 증가율 31.2%로 최상위입니다. 규제 의무화 시행이 6개월 이내로 예상됩니다.',impact:'EU AI법 준수 크리에이티브 제작 서비스는 BYD 등 유럽 진출 클라이언트에게 즉각적인 수요가 있습니다.',action:'컴플라이언스 크리에이티브 서비스를 유럽 Iris 자회사 중심으로 패키징하고 BYD 유럽 캠페인에 우선 적용할 것을 권고합니다.'}
+  };
+  const p = panels[region];
+  document.getElementById('ws-signal-text').textContent = p.signal;
+  document.getElementById('ws-impact-text').textContent = p.impact;
+  document.getElementById('ws-action-text').textContent = p.action;
+  document.getElementById('ws-drilldown').classList.add('hidden');
+}
+
+function updateOppAIPanel(region) {
+  const panels = {
+    국내:{signal:'국내 기준 AI 퍼포먼스 마케팅이 기회점수 16.3으로 최상위입니다. 중요도(9.2) 대비 만족도(2.1)의 격차가 가장 큰 미충족 영역입니다.',impact:'현재 제일기획의 DnA센터 역량을 AI 퍼포먼스 최적화 서비스로 패키징하면 즉시 수주 가능한 광고주 수요가 다수 존재합니다.',action:'AI 퍼포먼스 마케팅 전용 서비스 라인업을 2026 Q2 내 런칭하고 비계열 광고주 영업 파이프라인 최우선 집중을 권고합니다.'},
+    북미:{signal:'북미 기준 Retail Media AI 자동화가 기회점수 15.2로 최상위입니다. 대부분의 에이전시가 아직 수동 운영 중인 블루오션입니다.',impact:'McKinney 자회사를 통한 Retail Media AI 서비스는 북미 비계열 광고주 수주의 핵심 경쟁력이 될 수 있습니다.',action:'Retail Media AI 자동화 플랫폼을 McKinney 브랜드로 출시하고, Amazon/Walmart 광고주를 최우선 타겟으로 설정할 것을 권고합니다.'},
+    유럽:{signal:'유럽 기준 컴플라이언스 크리에이티브가 기회점수 14.8로 최상위입니다. EU AI법 의무화로 광고주의 긴급 수요가 형성 중입니다.',impact:'Iris 자회사의 유럽 네트워크를 활용하면 BYD 등 유럽 진출 글로벌 브랜드에 컴플라이언스 크리에이티브를 선점 제공할 수 있습니다.',action:'EU AI Act 준수 크리에이티브 가이드라인을 즉시 수립하고, BYD 유럽 캠페인에 시범 적용 후 서비스 상품화할 것을 권고합니다.'}
+  };
+  const p = panels[region];
+  document.getElementById('opp-signal-text').textContent = p.signal;
+  document.getElementById('opp-impact-text').textContent = p.impact;
+  document.getElementById('opp-action-text').textContent = p.action;
+  document.getElementById('opp-drilldown').classList.add('hidden');
+}
+
+// ============================================================
+// ONTOLOGY (D3)
+// ============================================================
+function renderOntology() {
+  const svg = d3.select('#ontology-graph');
+  svg.selectAll('*').remove();
+  const W = svg.node().getBoundingClientRect().width || 820;
+  const H = 680;
+  svg.attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
+
+  const region = ontologyRegion;
+  const allNodes = ONTOLOGY_DATA.nodes.filter(n => region === '전체' || n.region === 'all' || n.region === region);
+  // Deep copy nodes to prevent sim mutation bleeding across renders
+  const nodes = allNodes.map(n => ({...n}));
+  const nodeIds = new Set(nodes.map(n=>n.id));
+  const links = ONTOLOGY_DATA.edges.filter(e => nodeIds.has(e.s) && nodeIds.has(e.t)).map(e => ({...e, source:e.s, target:e.t}));
+
+  const sim = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(links).id(d=>d.id).distance(120))
+    .force('charge', d3.forceManyBody().strength(-300))
+    .force('center', d3.forceCenter(W/2, H/2))
+    .force('collision', d3.forceCollide(42));
+
+  const nodeColorMap = {
+    strength:'#10b981', weakness:'#ef4444', opportunity:'#38bdf8',
+    threat:'#f97316', signal:'#a78bfa', concept:'#fbbf24',
+    asset:'#94a3b8', action:'#34d399'
+  };
+
+  const g = svg.append('g');
+  svg.call(d3.zoom().scaleExtent([0.3,3]).on('zoom', e => g.attr('transform', e.transform)));
+
+  // Arrowhead marker
+  svg.append('defs').append('marker')
+    .attr('id','onto-arrow').attr('viewBox','-0 -5 10 10')
+    .attr('refX',24).attr('refY',0).attr('orient','auto')
+    .attr('markerWidth',6).attr('markerHeight',6)
+    .append('path').attr('d','M 0,-5 L 10,0 L 0,5').attr('fill','#52525b');
+
+  // Links
+  const link = g.append('g').selectAll('line').data(links).join('line')
+    .attr('class','link')
+    .attr('stroke','#3f3f46')
+    .attr('stroke-width', d => 0.8 + d.str * 1.6)
+    .attr('stroke-dasharray', d => d.type==='공백발생'?'5,3':'none')
+    .attr('marker-end','url(#onto-arrow)');
+
+  // Edge labels
+  const edgeLabel = g.append('g').selectAll('text').data(links).join('text')
+    .attr('class','edge-label')
+    .attr('font-size','8px').attr('fill','#52525b')
+    .attr('text-anchor','middle').attr('pointer-events','none')
+    .attr('dy','-2px')
+    .text(d => d.label);
+
+  // Node groups
+  const node = g.append('g').selectAll('g').data(nodes).join('g')
+    .attr('cursor','pointer')
+    .call(d3.drag()
+      .on('start', (e,d) => { if(!e.active) sim.alphaTarget(0.3).restart(); d.fx=d.x; d.fy=d.y; })
+      .on('drag', (e,d) => { d.fx=e.x; d.fy=e.y; })
+      .on('end', (e,d) => { if(!e.active) sim.alphaTarget(0); d.fx=null; d.fy=null; })
+    )
+    .on('click', (e,d) => handleNodeClick(e, d, node, link, edgeLabel));
+
+  node.each(function(d) {
+    const sel = d3.select(this);
+    const col = nodeColorMap[d.type] || '#6b7280';
+    switch(d.type) {
+      case 'strength': case 'weakness': case 'opportunity': case 'threat':
+        sel.append('rect').attr('x',-34).attr('y',-15).attr('width',68).attr('height',30).attr('rx',5)
+          .attr('fill',col).attr('fill-opacity',0.15).attr('stroke',col).attr('stroke-width',1.5);
+        break;
+      case 'signal':
+        sel.append('path').attr('d', d3.symbol().type(d3.symbolDiamond).size(900)())
+          .attr('fill',col).attr('fill-opacity',0.15).attr('stroke',col).attr('stroke-width',1.5);
+        break;
+      case 'concept':
+        sel.append('circle').attr('r',24)
+          .attr('fill',col).attr('fill-opacity',0.15).attr('stroke',col).attr('stroke-width',1.5);
+        break;
+      case 'asset':
+        sel.append('rect').attr('x',-30).attr('y',-13).attr('width',60).attr('height',26).attr('rx',2)
+          .attr('fill',col).attr('fill-opacity',0.15).attr('stroke',col).attr('stroke-width',1.5)
+          .attr('stroke-dasharray','3,2');
+        break;
+      case 'action':
+        sel.append('rect').attr('x',-34).attr('y',-15).attr('width',68).attr('height',30).attr('rx',15)
+          .attr('fill',col).attr('fill-opacity',0.15).attr('stroke',col).attr('stroke-width',1.5);
+        break;
+      default:
+        sel.append('circle').attr('r',18)
+          .attr('fill','#6b7280').attr('fill-opacity',0.15).attr('stroke','#6b7280').attr('stroke-width',1.5);
+    }
+    sel.append('text').attr('text-anchor','middle').attr('dy','0.35em')
+      .attr('font-size','8px').attr('fill','#d4d4d8').attr('pointer-events','none')
+      .text(d.id.length > 9 ? d.id.slice(0,8)+'…' : d.id);
+  });
+
+  const nodeLabel = g.append('g').selectAll('text').data(nodes).join('text')
+    .attr('text-anchor','middle').attr('font-size','9px').attr('fill','#a1a1aa')
+    .attr('pointer-events','none')
+    .text(d => d.label.length > 11 ? d.label.slice(0,11)+'…' : d.label);
+
+  sim.on('tick', () => {
+    link.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+        .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+    edgeLabel.attr('x',d=>(d.source.x+d.target.x)/2).attr('y',d=>(d.source.y+d.target.y)/2);
+    node.attr('transform',d=>`translate(${d.x},${d.y})`);
+    nodeLabel.attr('x',d=>d.x).attr('y',d=>d.y+34);
+  });
+}
+
+function handleNodeClick(event, d, nodeSelection, linkSelection, edgeLabelSelection) {
+  selectedNodes = [d.id];
+
+  // Build adjacency map (bidirectional)
+  const adj = {};
+  ONTOLOGY_DATA.nodes.forEach(n => { adj[n.id] = []; });
+  ONTOLOGY_DATA.edges.forEach(e => {
+    if (adj[e.s]) adj[e.s].push({nid: e.t, edge: e});
+    if (adj[e.t]) adj[e.t].push({nid: e.s, edge: e});
+  });
+
+  // BFS up to 3 hops
+  const visited = new Map(); // id → {depth, path}
+  const queue = [{id: d.id, depth: 0, path: [d.id]}];
+  visited.set(d.id, {depth: 0, path: [d.id]});
+  const highlightedEdgeKeys = new Set();
+
+  while (queue.length > 0) {
+    const cur = queue.shift();
+    if (cur.depth >= 3) continue;
+    (adj[cur.id] || []).forEach(({nid, edge}) => {
+      const key = edge.s + '→' + edge.t;
+      highlightedEdgeKeys.add(key);
+      if (!visited.has(nid)) {
+        const newPath = [...cur.path, nid];
+        visited.set(nid, {depth: cur.depth + 1, path: newPath});
+        queue.push({id: nid, depth: cur.depth + 1, path: newPath});
+      }
+    });
+  }
+
+  const connectedIds = new Set(visited.keys());
+
+  // Update visual highlight
+  nodeSelection.attr('opacity', n => connectedIds.has(n.id) ? 1 : 0.08);
+  linkSelection
+    .attr('opacity', l => highlightedEdgeKeys.has(l.s + '→' + l.t) ? 1 : 0.05)
+    .attr('stroke', l => highlightedEdgeKeys.has(l.s + '→' + l.t) ? '#d97706' : '#3f3f46');
+  if (edgeLabelSelection) {
+    edgeLabelSelection
+      .attr('opacity', l => highlightedEdgeKeys.has(l.s + '→' + l.t) ? 1 : 0.0)
+      .attr('fill', '#a16207');
+  }
+
+  // Collect paths (depth ≥ 2) for narrative
+  const deepPaths = [];
+  visited.forEach((v, nid) => {
+    if (nid !== d.id && v.depth >= 2) deepPaths.push({target: nid, depth: v.depth, path: v.path});
+  });
+  deepPaths.sort((a, b) => b.depth - a.depth);
+  const topPaths = deepPaths.slice(0, 3);
+
+  // Node metadata
+  const nodeData = ONTOLOGY_DATA.nodes.find(n => n.id === d.id);
+  const typeLabel = {strength:'강점',weakness:'약점',opportunity:'기회',threat:'위협',signal:'약신호',concept:'핵심 역량',asset:'보유 자산',action:'전략 행동'};
+  const typeBadgeColor = {strength:'text-emerald-400',weakness:'text-red-400',opportunity:'text-sky-400',threat:'text-orange-400',signal:'text-violet-400',concept:'text-amber-400',asset:'text-slate-400',action:'text-teal-400'};
+
+  const outEdges = ONTOLOGY_DATA.edges.filter(e => e.s === d.id);
+  const inEdges  = ONTOLOGY_DATA.edges.filter(e => e.t === d.id);
+
+  // Build path HTML
+  const pathsHTML = topPaths.length > 0 ? `
+    <div class="border-t border-zinc-800 pt-3">
+      <p class="text-xs text-zinc-500 font-semibold mb-2">연결 경로 분석 (최대 ${topPaths[0].depth}단계)</p>
+      <div class="space-y-3">
+        ${topPaths.map(p => {
+          const stepsHTML = p.path.map((nid, i) => {
+            const nn = ONTOLOGY_DATA.nodes.find(x => x.id === nid);
+            const col = typeBadgeColor[nn?.type] || 'text-zinc-300';
+            if (i < p.path.length - 1) {
+              const fwd = ONTOLOGY_DATA.edges.find(e => e.s === p.path[i] && e.t === p.path[i+1]);
+              const bwd = ONTOLOGY_DATA.edges.find(e => e.s === p.path[i+1] && e.t === p.path[i]);
+              const edgeLabel = (fwd || bwd)?.label || '연결';
+              return `<span class="${col} text-xs font-semibold">${nn?.label||nid}</span><span class="text-zinc-600 mx-1 text-[10px]">─[${edgeLabel}]→</span>`;
+            }
+            return `<span class="${col} text-xs font-semibold">${nn?.label||nid}</span>`;
+          }).join('');
+          return `<div class="bg-zinc-800/50 rounded p-2.5">
+            <div class="text-xs leading-relaxed flex flex-wrap items-center gap-0.5 mb-1.5">${stepsHTML}</div>
+            <p class="text-xs text-zinc-400 leading-snug">${generatePathInsight(p.path)}</p>
+          </div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  // Direct connections
+  const directHTML = outEdges.length + inEdges.length > 0 ? `
+    <div class="border-t border-zinc-800 pt-3">
+      <p class="text-xs text-zinc-500 font-semibold mb-2">직접 연결 관계</p>
+      <div class="space-y-1.5">
+        ${outEdges.slice(0,4).map(e => {
+          const tn = ONTOLOGY_DATA.nodes.find(n => n.id === e.t);
+          return `<div class="flex items-center gap-2"><span class="text-xs text-amber-500">→ ${e.label}</span><span class="text-xs text-zinc-300">${tn?.label||e.t}</span></div>`;
+        }).join('')}
+        ${inEdges.slice(0,4).map(e => {
+          const sn = ONTOLOGY_DATA.nodes.find(n => n.id === e.s);
+          return `<div class="flex items-center gap-2"><span class="text-xs text-sky-500">← ${e.label}</span><span class="text-xs text-zinc-300">${sn?.label||e.s}</span></div>`;
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  const panel = document.getElementById('onto-ai-panel');
+  panel.innerHTML = `
+    <div class="space-y-3">
+      <div>
+        <p class="text-xs ${typeBadgeColor[nodeData?.type]||'text-zinc-400'} font-bold uppercase tracking-wider mb-1">${typeLabel[nodeData?.type]||'노드'}</p>
+        <p class="text-base font-bold text-white leading-snug">${nodeData?.label||d.id}</p>
+        <p class="text-xs text-zinc-400 leading-relaxed mt-1">${nodeData?.desc||''}</p>
+      </div>
+      <div class="grid grid-cols-2 gap-2">
+        <div class="bg-zinc-800/60 rounded p-2">
+          <p class="text-[9px] text-zinc-500">연결 범위</p>
+          <p class="text-xl font-bold text-white">${connectedIds.size - 1}<span class="text-xs text-zinc-500 font-normal"> 노드</span></p>
+        </div>
+        <div class="bg-zinc-800/60 rounded p-2">
+          <p class="text-[9px] text-zinc-500">최대 경로 깊이</p>
+          <p class="text-xl font-bold text-amber-400">${topPaths[0]?.depth||1}<span class="text-xs text-zinc-500 font-normal"> 단계</span></p>
+        </div>
+      </div>
+      ${pathsHTML}
+      ${directHTML}
+      <p class="text-[9px] text-zinc-600 pt-1">노드 클릭으로 재탐색 · 드래그로 이동 · 스크롤로 확대</p>
+    </div>`;
+}
+
+function generatePathInsight(path) {
+  const startNode = ONTOLOGY_DATA.nodes.find(n => n.id === path[0]);
+  const endNode   = ONTOLOGY_DATA.nodes.find(n => n.id === path[path.length - 1]);
+  const midLabels = path.slice(1, -1).map(id => ONTOLOGY_DATA.nodes.find(n => n.id === id)?.label || id);
+  const startL = startNode?.label || path[0];
+  const endL   = endNode?.label   || path[path.length - 1];
+  const midStr = midLabels.length > 0 ? midLabels.join(' → ') : null;
+
+  // Build edge sequence for additional context
+  const edgeTypes = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const e = ONTOLOGY_DATA.edges.find(ed =>
+      (ed.s === path[i] && ed.t === path[i+1]) || (ed.s === path[i+1] && ed.t === path[i])
+    );
+    if (e) edgeTypes.push(e.type);
+  }
+  const hasGap    = edgeTypes.includes('공백발생');
+  const hasResolve = edgeTypes.includes('해결함');
+
+  // ── 노드 조합별 구체적 인사이트 ─────────────────────────────
+  const pairKey = path[0] + '…' + path[path.length - 1];
+  const specific = {
+    'W3…T3':        'AI 역량 공백이 Publicis의 크리에이티브 선점을 방치하는 구조입니다. 공백을 메우지 않으면 격차는 복리로 벌어지며, 결국 제일기획의 크리에이티브 수주 경쟁력 자체가 위협받습니다.',
+    'W3…MKTG_ROI':  '크리에이티브·퍼포먼스 공백이 최종적으로 마케팅 ROI 측정 불능으로 귀결됩니다. 광고주 관점에서 ROI를 증명 못 하는 에이전시는 교체 대상이 됩니다. 가장 시급한 수익 방어 과제입니다.',
+    'W3…AUDIENCE':  '가치사슬 AI 공백이 오디언스 인텔리전스 역량까지 연쇄 차단합니다. AI 없이는 정밀 타겟팅이 불가하고, 타겟팅 열위는 광고주 이탈로 직결됩니다.',
+    'W2…T3':        'AI 실행 지연 18개월이 Publicis 격차를 메울 수 없는 수준으로 키우고 있습니다. 추가 지연은 단순 경쟁 열위가 아니라 시장 퇴출 위험으로 전환됩니다.',
+    'W2…T1':        'AI 전략 실행 격차와 WPP 경로 위험이 직접 연결됩니다. WPP도 "전략은 있었으나 실행이 없었다"는 동일 패턴으로 붕괴했습니다. 지금 제일기획이 처한 구조와 동일합니다.',
+    'W1…T1':        '삼성 의존 71%가 WPP 붕괴 패턴을 재현하는 핵심 구조입니다. WPP도 소수 대형 클라이언트에 의존하다 그 관계가 흔들리면서 모든 것이 무너졌습니다. 비계열 매출 다변화가 생존 전략입니다.',
+    'S2…A4':        '현금 4,700억이 AI M&A 실행으로 바로 연결될 수 있는 직접 자원 경로입니다. AI 스타트업 밸류에이션 조정기인 지금, 이 자본을 집행하지 않으면 타이밍 우위를 영구히 상실합니다.',
+    'S2…O5':        '강력한 현금 보유가 AI M&A 기회창과 맞닿아 있습니다. 재무 여력이 전략 실행력으로 전환되는 시점이 지금입니다.',
+    'S3…RETAIL_M':  'M&A로 이미 확보한 McKinney 자산이 리테일 미디어 AI로 연결됩니다. 추가 투자 없이 기존 자산 활용만으로 신규 수익원을 개척할 수 있는 가장 효율적인 성장 경로입니다.',
+    'S4…CREATIVE':  'CopyJoe·ContiJoe가 크리에이티브 자동화 역량의 씨앗입니다. 현재 텍스트·이미지 수준에서 영상 생성으로 확장하면 이 경로가 경쟁 무기로 전환됩니다.',
+    'WS1…O1':       '생성형AI 광고 약신호가 이미 시장 기회로 전환되고 있습니다. 신호 단계에서 움직이지 않으면 기회가 위협으로 전환되는 시점에야 대응하게 됩니다.',
+    'WS1…CREATIVE': '생성형AI 광고 수요 신호가 크리에이티브 자동화 역량에 대한 시장 요구로 구체화됩니다. 이 신호에 선제 투자하는 에이전시가 시장 성숙기에 독점적 포지션을 차지합니다.',
+    'WS2…RETAIL_M': '에이전시 수동 운영 불만 신호가 Retail Media AI 자동화 수요로 전환되고 있습니다. 이 불만을 먼저 제품으로 해결하는 에이전시가 블루오션을 선점합니다.',
+    'WS3…IRIS':     'EU AI법 시행 신호가 Iris 유럽 네트워크를 통한 직접 사업 기회로 연결됩니다. 이미 보유한 유럽 자산을 지금 당장 활성화해야 할 이유입니다.',
+    'WS3…COMP_OBL': 'EU AI법 규제 신호가 AI 컴플라이언스 서비스 수요로 직결됩니다. 규제 발효 전 서비스를 완성하면 법적 의무 이행이 필요한 모든 유럽 광고주가 자동으로 잠재 고객이 됩니다.',
+    'T2…PERF_OPT':  '빅테크 직접 집행이 퍼포먼스 최적화 영역을 잠식하고 있습니다. 에이전시가 단순 집행 대행에 머물면 Google·Meta·Amazon 자동화 도구에 완전히 대체됩니다. 전략적 레이어로의 포지션 전환이 생존 조건입니다.',
+    'T2…AI_ADV':    '빅테크 직접 집행 위협이 AI 광고 플랫폼 전 영역에 걸쳐 있습니다. 에이전시가 자체 AI 플랫폼 없이는 빅테크의 대체재로 전락합니다.',
+    'T1…W2':        'WPP 붕괴 선례가 AI 전략 실행 격차의 위험성을 경고합니다. WPP의 시총 87% 소멸이 보여주듯, 실행 없는 전략은 곧 생존 위기입니다.',
+    'O1…AI_ADV':    '생성형AI 광고 시장 성장이 AI 광고 플랫폼 수요로 직결됩니다. 2032년 1,924억 달러 시장에서 플랫폼을 가진 에이전시와 없는 에이전시의 수주력 차이는 넘을 수 없는 장벽이 됩니다.',
+    'O2…AUDIENCE':  '리테일 미디어 성장이 오디언스 인텔리전스 수요로 연결됩니다. 1st party 구매 데이터 기반 타겟팅이 쿠키리스 환경의 핵심 경쟁력이 됩니다.',
+    'A1…CREATIVE':  'AI 크리에이티브 확장 전략이 직접 실행되면 크리에이티브 자동화 역량이 확보됩니다. 이 전략 행동 하나가 W3(가치사슬 공백)·T3(Publicis 위협) 두 문제를 동시에 해소하는 레버리지 포인트입니다.',
+    'A1…W3':        'AI 크리에이티브 확장 행동이 가치사슬 AI 공백을 직접 해소합니다. 하나의 전략 결정이 가장 많은 약점을 동시에 커버하는 최고 효율 투자입니다.',
+    'A4…W2':        'AI M&A 실행이 AI 전략 실행 격차를 단기간에 해소합니다. 내부 개발로 18개월 지연을 만회하는 것보다 인수를 통한 역량 내재화가 3~4배 빠릅니다.',
+    'A4…DATA_INT':  'AI M&A 실행이 데이터 통합 인프라까지 강화합니다. 기술 기업 인수는 단순 서비스 확장이 아니라 데이터 인프라 자체를 업그레이드하는 효과가 있습니다.',
+    'COPYJOE…AUDIENCE': 'CopyJoe가 크리에이티브 자동화를 지원하고, 이것이 오디언스 인텔리전스로 연결됩니다. 생성 AI와 타겟팅 AI를 통합하는 방향이 제일기획 AI 플랫폼의 완성 형태입니다.',
+    'DATA_INT…MKTG_ROI': '데이터 통합 인프라가 마케팅 ROI 측정의 근본 기반입니다. 이 경로는 인프라 투자가 광고주에게 직접 가시적 가치로 전달되는 메커니즘을 나타냅니다.',
+  };
+  if (specific[pairKey]) return specific[pairKey];
+
+  // ── 엣지 패턴 기반 동적 인사이트 ──────────────────────────
+  const via = midStr ? ` ${midStr}을(를) 매개로` : '';
+  if (hasGap && endNode?.type === 'threat') {
+    return `${startL}의 역량 공백이${via} ${endL}의 위협 강도를 높이고 있습니다. 공백 해소가 이 위험 경로를 차단하는 선행 조건입니다.`;
+  }
+  if (hasResolve) {
+    return `${startL}이(가)${via} ${endL}을(를) 직접 해소하는 전략 실행 경로입니다. 이 행동을 우선 실행할수록 연쇄 개선 효과가 빠르게 나타납니다.`;
+  }
+  if (startNode?.type === 'signal' && (endNode?.type === 'concept' || endNode?.type === 'opportunity')) {
+    return `${startL} 신호가${via} ${endL} 수요로 구체화되고 있습니다. 신호가 시장 기회로 전환되기 전에 선제 투자하면 경쟁사 대비 최소 6~12개월 우위를 확보합니다.`;
+  }
+  if (startNode?.type === 'weakness' && endNode?.type === 'threat') {
+    return `${startL}이(가)${via} ${endL}의 영향력을 증폭시키는 복합 위험 구조입니다. 약점 해소 없이는 위협에 대한 어떤 방어 전략도 효과가 제한됩니다.`;
+  }
+  if (startNode?.type === 'strength' && (endNode?.type === 'action' || endNode?.type === 'concept')) {
+    return `${startL} 강점이${via} ${endL}으로 연결되는 경쟁 우위 실현 경로입니다. 이미 보유한 자산을 더 적극적으로 활용하면 투자 대비 최대 효율의 성과를 낼 수 있습니다.`;
+  }
+  if (startNode?.type === 'action' && endNode?.type === 'concept') {
+    return `${startL} 전략 행동이${via} ${endL} 역량으로 직접 축적됩니다. 이 실행 경로가 완성되면 단기 성과와 장기 역량 강화가 동시에 달성됩니다.`;
+  }
+
+  // ── 최종 폴백: 엣지 흐름 기반 서술 ───────────────────────
+  const edgeLabels = [];
+  for (let i = 0; i < path.length - 1; i++) {
+    const e = ONTOLOGY_DATA.edges.find(ed =>
+      (ed.s === path[i] && ed.t === path[i+1]) || (ed.s === path[i+1] && ed.t === path[i])
+    );
+    const toN = ONTOLOGY_DATA.nodes.find(n => n.id === path[i+1]);
+    if (e && toN) edgeLabels.push(`[${e.label}] → ${toN.label}`);
+  }
+  return `${startL}이(가) ${edgeLabels.join(', ')}의 순서로 연결됩니다. ${startL}에 대한 의사결정이 ${endL}에 직접 파급되는 구조이므로, 두 요소를 연동한 전략 수립이 필요합니다.`;
+}
+
+function setOntologyRegion(region, btn) {
+  document.querySelectorAll('[onclick^="setOntologyRegion"]').forEach(b => { b.classList.remove('active','text-white'); b.classList.add('text-zinc-400'); });
+  btn.classList.add('active','text-white'); btn.classList.remove('text-zinc-400');
+  ontologyRegion = region;
+  selectedNodes = [];
+  renderOntology();
+}
+
+// ============================================================
+// INTELLIGENCE FEED
+// ============================================================
+function renderFeed() {
+  const filtered = FEED_DATA.filter(f => {
+    if (feedFilter === '전체') return true;
+    return f.type === feedFilter || f.region === feedFilter;
+  });
+  const list = document.getElementById('feed-list');
+  list.innerHTML = filtered.map(f => `
+    <div class="card p-4 hover:border-amber-500/30 transition-colors cursor-pointer" onclick="showFeedDetail('${f.id}')">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 flex-wrap mb-1">
+            <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-2 py-0.5">${f.region}</span>
+            <span class="text-[10px] ${f.type==='뉴스'?'bg-sky-500/10 text-sky-400':'bg-violet-500/10 text-violet-400'} rounded px-2 py-0.5">${f.type}</span>
+            <span class="text-[10px] text-zinc-600">${f.date}</span>
+            <span class="text-[10px] text-zinc-600">— ${f.src}</span>
+          </div>
+          <p class="text-sm text-zinc-200 mb-2 leading-tight">${f.title}</p>
+          <div class="flex flex-wrap gap-1">${f.tags.map(t=>`<span class="text-[10px] bg-amber-500/10 text-amber-400/80 border border-amber-500/15 rounded px-2 py-0.5">→ ${t}</span>`).join('')}</div>
+        </div>
+        <button class="bookmark-btn text-zinc-600 hover:text-amber-400 shrink-0 ${savedBookmarks[f.id]?'saved':''}" onclick="openBookmarkModal('${f.id}','${f.title.slice(0,40)}')">
+          <iconify-icon icon="solar:star-${savedBookmarks[f.id]?'bold':'linear'}"></iconify-icon>
+        </button>
+      </div>
+    </div>`).join('');
+}
+
+function setFeedFilter(filter, btn) {
+  document.querySelectorAll('.feed-filter').forEach(b => { b.classList.remove('active','text-white'); b.classList.add('text-zinc-400'); });
+  btn.classList.add('active','text-white'); btn.classList.remove('text-zinc-400');
+  feedFilter = filter;
+  renderFeed();
+}
+
+function showFeedDetail(id) {
+  const d = FEED_DETAIL[id];
+  const f = FEED_DATA.find(x=>x.id===id);
+  if (!d || !f) return;
+  const urgencyColor = {critical:'text-red-400 bg-red-500/10 border-red-500/20', high:'text-amber-400 bg-amber-500/10 border-amber-500/20', medium:'text-sky-400 bg-sky-500/10 border-sky-500/20'};
+  const urgencyLabel = {critical:'긴급', high:'중요', medium:'보통'};
+  const maxTrend = Math.max(...d.trend);
+  const trendBars = d.trend.map((v,i) => `<div class="flex flex-col items-center gap-1">
+    <div class="w-5 rounded-sm bg-amber-400/70" style="height:${Math.round((v/maxTrend)*40)}px"></div>
+    <span class="text-[9px] text-zinc-600">${['10월','11월','12월','1월','2월','3월'][i]}</span>
+  </div>`).join('');
+
+  document.getElementById('feed-detail-panel').innerHTML = `
+    <div class="space-y-4">
+      <div class="flex items-start justify-between gap-3">
+        <div class="flex-1">
+          <div class="flex flex-wrap items-center gap-2 mb-2">
+            <span class="text-[10px] border rounded px-2 py-0.5 font-semibold ${urgencyColor[d.urgency]}">${urgencyLabel[d.urgency]}</span>
+            <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-2 py-0.5">${f.region}</span>
+            <span class="text-[10px] text-zinc-500">${f.date} · ${f.src}</span>
+          </div>
+          <p class="text-sm font-semibold text-white leading-tight">${f.title}</p>
+        </div>
+      </div>
+
+      <div class="text-xs text-zinc-300 leading-relaxed bg-zinc-900/50 rounded-lg p-3 border border-white/5">${d.summary}</div>
+
+      <div>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">상세 맥락</p>
+        <p class="text-xs text-zinc-400 leading-relaxed">${d.context}</p>
+      </div>
+
+      <div>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">제일기획 영향</p>
+        <p class="text-xs text-zinc-300 leading-relaxed">${d.cheil_impact}</p>
+      </div>
+
+      <div>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">언급 빈도 추이</p>
+        <div class="flex items-end gap-1.5 h-12">${trendBars}</div>
+      </div>
+
+      <div>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">연결된 SWOT</p>
+        <div class="flex flex-wrap gap-1">${d.swot.map(s=>`<span class="text-[10px] bg-zinc-800/80 text-zinc-300 rounded px-2 py-0.5">${s}</span>`).join('')}</div>
+      </div>
+
+      <div>
+        <p class="text-[10px] text-zinc-500 uppercase tracking-widest mb-2">연결된 신호 · 기회</p>
+        <div class="flex flex-wrap gap-1">
+          ${d.signals.map(s=>`<span class="text-[10px] bg-violet-500/10 text-violet-400 border border-violet-500/20 rounded px-2 py-0.5">${s}</span>`).join('')}
+          ${d.opportunities.map(o=>`<span class="text-[10px] bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded px-2 py-0.5">${o}</span>`).join('')}
+        </div>
+      </div>
+
+      <div class="bg-amber-500/8 border border-amber-500/20 rounded-lg p-3">
+        <p class="text-[10px] text-amber-400 font-semibold uppercase tracking-widest mb-1">권고 액션</p>
+        <p class="text-xs text-zinc-200 leading-relaxed">${d.action}</p>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// SIDE PANEL
+// ============================================================
+function openSidePanel() { document.getElementById('side-panel').classList.add('open'); }
+function closeSidePanel() { document.getElementById('side-panel').classList.remove('open'); }
+
+// ============================================================
+// BOOKMARKS
+// ============================================================
+let currentBookmarkId = '';
+function openBookmarkModal(id, label) {
+  currentBookmarkId = id;
+  document.getElementById('bookmark-item-label').textContent = label;
+  document.getElementById('bookmark-memo-input').value = savedBookmarks[id]?.memo || '';
+  document.getElementById('bookmark-modal').classList.add('open');
+}
+function closeBookmarkModal() { document.getElementById('bookmark-modal').classList.remove('open'); }
+function saveBookmark() {
+  const memo = document.getElementById('bookmark-memo-input').value;
+  savedBookmarks[currentBookmarkId] = { memo, date: new Date().toISOString().slice(0,10) };
+  closeBookmarkModal();
+  updateSavedInsights();
+  // Re-render current active tab to update bookmark icons
+  const activeTab = document.querySelector('.tab-content.active');
+  if (activeTab?.id === 'tab-swot') renderSWOT();
+  if (activeTab?.id === 'tab-feed') renderFeed();
+}
+function updateSavedInsights() {
+  const container = document.getElementById('saved-insights-list');
+  const items = Object.entries(savedBookmarks);
+  if (!items.length) { container.innerHTML = '<p class="text-xs text-zinc-600">북마크한 항목이 여기에 표시됩니다.</p>'; return; }
+  container.innerHTML = items.map(([id,{memo,date}]) => `
+    <div class="text-xs border-b border-white/5 pb-2 last:border-0 last:pb-0">
+      <p class="text-zinc-300 font-medium">${id}</p>
+      ${memo ? `<p class="text-zinc-500 mt-0.5 leading-tight">${memo}</p>` : ''}
+      <p class="text-zinc-600 mt-0.5">${date}</p>
+    </div>`).join('');
+}
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  renderSWOT();
+  renderFeed();
+  // Style feed-filter active
+  document.querySelector('.feed-filter').classList.add('text-white');
+  document.querySelector('.feed-filter').classList.remove('text-zinc-400');
+});
+</script>
+</body>
+</html>
