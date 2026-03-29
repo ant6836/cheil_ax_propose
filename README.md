@@ -33,7 +33,7 @@ MODEL=vertex_ai.anthropic.claude-sonnet-4-6
 **Step 1 — Flask 서버 시작** (PowerShell 창 1개 열어서 실행)
 
 ```powershell
-& "C:\Users\sleez661\Desktop\vscode\MiroFish-Ko\backend\.venv\Scripts\python.exe" "C:\Users\sleez661\Desktop\vscode\cheil_ax_propose\server.py"
+& "C:\Users\~~~\Desktop\vscode\MiroFish-Ko\backend\.venv\Scripts\python.exe" "C:\Users\~~~\Desktop\vscode\cheil_ax_propose\server.py"
 ```
 
 아래 메시지가 뜨면 서버 정상 구동:
