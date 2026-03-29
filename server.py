@@ -51,7 +51,7 @@ NODES = [
     {
         "id": "S4",
         "type": "strength",
-        "label": "CopyJoe·ContiJoe",
+        "label": "Copy Joe · Conti Joe",
         "desc": "국내 최초 광고 특화 생성형AI 도구. 텍스트·이미지 생성 영역에서 내부 생산성 증가.",
         "region": "all",
     },
@@ -223,9 +223,9 @@ NODES = [
     },
     # 보유 자산
     {
-        "id": "COPYJOE",
+        "id": "COPY JOE",
         "type": "asset",
-        "label": "CopyJoe AI",
+        "label": "Copy Joe AI",
         "desc": "제일기획 자체 개발 텍스트 생성AI. 광고 카피 자동 생성. 현재 영상 생성 기능 부재.",
         "region": "all",
     },
@@ -248,7 +248,7 @@ NODES = [
         "id": "A1",
         "type": "action",
         "label": "AI 크리에이티브 확장",
-        "desc": "CopyJoe·ContiJoe를 영상 생성AI로 확장하고 생성형AI 광고 패키지 상품화. 목표: 2026 Q3.",
+        "desc": "Copy Joe · Conti Joe를 영상 생성AI로 확장하고 생성형AI 광고 패키지 상품화. 목표: 2026 Q3.",
         "region": "all",
     },
     {
@@ -275,7 +275,7 @@ NODES = [
 ]
 
 EDGES = [
-    {"s": "S4", "t": "COPYJOE", "type": "보유함", "str": 1.0, "label": "보유"},
+    {"s": "S4", "t": "COPY JOE", "type": "보유함", "str": 1.0, "label": "보유"},
     {"s": "S2", "t": "O5", "type": "가능케함", "str": 0.85, "label": "투자 재원"},
     {"s": "S2", "t": "A4", "type": "가능케함", "str": 0.9, "label": "M&A 자금"},
     {"s": "S3", "t": "MCKINNEY", "type": "연결됨", "str": 0.9, "label": "해외 자산"},
@@ -397,7 +397,7 @@ EDGES = [
         "label": "성과 측정",
     },
     {
-        "s": "COPYJOE",
+        "s": "COPY JOE",
         "t": "CREATIVE",
         "type": "지원함",
         "str": 0.8,
@@ -412,7 +412,7 @@ EDGES = [
     },
     {"s": "IRIS", "t": "COMP_OBL", "type": "운영함", "str": 0.8, "label": "규제 대응"},
     {"s": "A1", "t": "W3", "type": "해결함", "str": 0.9, "label": "AI 역량 확충"},
-    {"s": "A1", "t": "COPYJOE", "type": "확장함", "str": 0.85, "label": "영상AI 추가"},
+    {"s": "A1", "t": "COPY JOE", "type": "확장함", "str": 0.85, "label": "영상AI 추가"},
     {
         "s": "A1",
         "t": "CREATIVE",
