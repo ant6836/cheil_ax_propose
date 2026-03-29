@@ -6,9 +6,7 @@
 cheil_ax_propose/
 ├── dashboard.html       # 메인 대시보드 (브라우저에서 직접 열기)
 ├── server.py            # Graph-RAG Flask 백엔드
-├── 06_daily_summary.py  # PDF → LLM 일일 요약 스크립트
-├── .env                 # API 키 설정 (gitignore 처리됨 — 직접 생성 필요)
-└── AI_Architecture_Spec.md
+└── .env                 # API 키 설정 (gitignore 처리됨 — 직접 생성 필요)
 ```
 
 ---
@@ -80,14 +78,3 @@ http://localhost:5000/health
 - "W3 약점을 해소하는 전략 경로는?"
 - "제일기획의 가장 긴급한 위협은?"
 - "현금 4,700억을 어디에 먼저 투자해야 하나?"
-
----
-
-## 패키지 (venv에 이미 설치됨)
-
-MiroFish-Ko `.venv`에 필요한 패키지가 모두 포함되어 있어 별도 설치 불필요.
-
-필요 시 수동 설치:
-```powershell
-& "C:\Users\sleez661\Desktop\vscode\MiroFish-Ko\backend\.venv\Scripts\pip.exe" install flask flask-cors python-dotenv requests
-```
