@@ -65,6 +65,14 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
 
 /* Timeline */
 .timeline-item::before { content: ''; position: absolute; left: -17px; top: 6px; width: 6px; height: 6px; background: #f59e0b; border-radius: 50%; }
+
+/* Ontology Chat */
+.onto-tab-panel { display: block; }
+.onto-tab-panel.hidden { display: none; }
+.onto-tab-btn { border-bottom: 2px solid transparent; transition: all 0.15s; }
+.onto-tab-btn.active { border-bottom-color: #f59e0b; color: #fbbf24; }
+#onto-chat-history::-webkit-scrollbar { width: 3px; }
+#onto-chat-history::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 2px; }
 </style>
 </head>
 <body>
@@ -457,24 +465,70 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
     <div class="xl:w-[55%] min-w-0">
       <svg id="ontology-graph"></svg>
     </div>
-    <div class="card p-5 xl:flex-1 shrink-0">
-      <div class="flex items-center gap-2 mb-4">
-        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+    <div class="card p-5 xl:flex-1 shrink-0 flex flex-col" style="min-height:520px">
+      <!-- 탭 헤더 -->
+      <div class="flex gap-0 mb-4 border-b border-zinc-800">
+        <button id="onto-tab-btn-insight" class="onto-tab-btn active text-xs px-4 py-2 text-amber-400" onclick="switchOntoTab('insight')">
+          <iconify-icon icon="solar:magic-stick-3-bold" class="mr-1"></iconify-icon>AI 해석
+        </button>
+        <button id="onto-tab-btn-chat" class="onto-tab-btn text-xs px-4 py-2 text-zinc-500 hover:text-zinc-300" onclick="switchOntoTab('chat')">
+          <iconify-icon icon="solar:chat-round-dots-linear" class="mr-1"></iconify-icon>AI 대화
+        </button>
       </div>
-      <div id="onto-ai-panel">
+
+      <!-- 탭1: 기존 AI 해석 패널 -->
+      <div id="onto-ai-panel" class="onto-tab-panel flex-1">
         <div class="space-y-4">
           <div>
             <p class="text-xs text-amber-400 font-semibold mb-1">온톨로지 구조 개요</p>
-            <p class="text-xs text-zinc-400 leading-relaxed">34개 노드 · 50개 엣지로 구성된 전략 지식 그래프입니다. 강점·약점·기회·위협·약신호·역량·자산·전략행동이 유기적으로 연결되어 있습니다.</p>
+            <p class="text-xs text-zinc-400 leading-relaxed">34개 노드 · 59개 엣지로 구성된 전략 지식 그래프입니다. 강점·약점·기회·위협·약신호·역량·자산·전략행동이 유기적으로 연결되어 있습니다.</p>
           </div>
           <div>
             <p class="text-xs text-amber-400 font-semibold mb-1">핵심 허브 노드</p>
             <p class="text-xs text-zinc-400 leading-relaxed"><span class="text-white">W3(가치사슬 AI 공백)</span>은 3개 역량 공백과 동시에 연결된 최대 허브입니다. <span class="text-white">AI_ADV(AI 광고 플랫폼)</span>는 위협·기회·전략행동이 모두 교차하는 전략 중심점입니다.</p>
           </div>
           <div>
-            <p class="text-xs text-zinc-500">노드를 클릭하면 BFS 기반으로 5단계까지의 연결 경로와 전략적 해석을 제공합니다.</p>
+            <p class="text-xs text-zinc-500">노드를 클릭하면 BFS 기반으로 연결 경로와 전략적 해석을 제공합니다.<br>
+            <span class="text-amber-500/70">AI 대화</span> 탭에서 그래프에 대해 자연어로 질문할 수 있습니다.</p>
           </div>
+        </div>
+      </div>
+
+      <!-- 탭2: Graph-RAG 대화형 패널 -->
+      <div id="onto-chat-panel" class="onto-tab-panel hidden flex flex-col flex-1" style="height:460px">
+        <!-- 대화 히스토리 -->
+        <div id="onto-chat-history" class="flex-1 overflow-y-auto space-y-3 pr-1 mb-3" style="min-height:0">
+          <div id="onto-chat-placeholder" class="flex flex-col items-center justify-center h-full gap-3 pt-6">
+            <iconify-icon icon="solar:graph-up-linear" class="text-zinc-700 text-3xl"></iconify-icon>
+            <p class="text-zinc-600 text-xs text-center leading-relaxed">그래프에 대해 자연어로 질문해보세요.<br>노드를 클릭한 후 질문하면 해당 노드 컨텍스트가 반영됩니다.</p>
+            <!-- 추천 질문 칩 -->
+            <div class="flex flex-col gap-1.5 w-full mt-2">
+              <button onclick="askSuggested(this)" class="text-left text-[11px] bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 rounded-lg px-3 py-2 transition-colors leading-tight">
+                💡 W3 약점을 해소하는 전략 경로는?
+              </button>
+              <button onclick="askSuggested(this)" class="text-left text-[11px] bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 rounded-lg px-3 py-2 transition-colors leading-tight">
+                💡 제일기획의 가장 긴급한 위협은?
+              </button>
+              <button onclick="askSuggested(this)" class="text-left text-[11px] bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-400 hover:text-zinc-200 border border-zinc-700/50 rounded-lg px-3 py-2 transition-colors leading-tight">
+                💡 현금 4,700억을 어디에 먼저 투자해야 하나?
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 입력 영역 -->
+        <div class="border-t border-zinc-800 pt-3 shrink-0">
+          <div class="flex gap-2">
+            <textarea id="onto-chat-input" rows="2"
+              placeholder="질문을 입력하세요... (Enter 전송, Shift+Enter 줄바꿈)"
+              class="flex-1 bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-xs text-zinc-200 resize-none focus:outline-none focus:border-amber-500/50 placeholder-zinc-600"
+              onkeydown="handleOntoChatKeydown(event)"></textarea>
+            <button id="onto-chat-send" onclick="sendOntologyChat()"
+              class="self-end bg-amber-500 hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-black text-xs font-bold rounded-lg px-3 py-2 transition-colors shrink-0">
+              전송
+            </button>
+          </div>
+          <p id="onto-backend-status" class="text-[10px] text-zinc-600 mt-1.5 min-h-[14px]"></p>
         </div>
       </div>
     </div>
@@ -1740,6 +1794,133 @@ function updateSavedInsights() {
       ${memo ? `<p class="text-zinc-500 mt-0.5 leading-tight">${memo}</p>` : ''}
       <p class="text-zinc-600 mt-0.5">${date}</p>
     </div>`).join('');
+}
+
+// ============================================================
+// ONTOLOGY CHAT (Graph-RAG)
+// ============================================================
+const CHAT_API_URL = 'http://localhost:5000/api/ontology/chat';
+let ontoChatHistory = [];   // {role, content}
+let ontoCurrentTab = 'insight';
+let ontoChatLoading = false;
+
+function switchOntoTab(tab) {
+  ontoCurrentTab = tab;
+  const isInsight = tab === 'insight';
+  document.getElementById('onto-ai-panel').classList.toggle('hidden', !isInsight);
+  document.getElementById('onto-chat-panel').classList.toggle('hidden', isInsight);
+  ['insight', 'chat'].forEach(t => {
+    const btn = document.getElementById('onto-tab-btn-' + t);
+    if (!btn) return;
+    btn.classList.toggle('active', t === tab);
+    btn.classList.toggle('text-amber-400', t === tab);
+    btn.classList.toggle('text-zinc-500', t !== tab);
+  });
+}
+
+function askSuggested(btn) {
+  const q = btn.textContent.replace(/^💡\s*/, '').trim();
+  document.getElementById('onto-chat-input').value = q;
+  sendOntologyChat();
+}
+
+function handleOntoChatKeydown(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendOntologyChat();
+  }
+}
+
+async function sendOntologyChat() {
+  if (ontoChatLoading) return;
+  const input = document.getElementById('onto-chat-input');
+  const question = input.value.trim();
+  if (!question) return;
+
+  ontoChatLoading = true;
+  input.value = '';
+  input.disabled = true;
+  const sendBtn = document.getElementById('onto-chat-send');
+  sendBtn.disabled = true;
+
+  // 플레이스홀더 제거
+  const placeholder = document.getElementById('onto-chat-placeholder');
+  if (placeholder) placeholder.remove();
+
+  // 사용자 메시지 버블
+  appendOntoChatMessage('user', question);
+  ontoChatHistory.push({ role: 'user', content: question });
+
+  // 로딩 버블
+  const loadingBubble = appendOntoChatMessage('assistant', '<span class="inline-flex gap-1"><span class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style="animation-delay:0s"></span><span class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style="animation-delay:0.15s"></span><span class="w-1.5 h-1.5 bg-amber-400 rounded-full animate-bounce" style="animation-delay:0.3s"></span></span>');
+
+  const statusEl = document.getElementById('onto-backend-status');
+  statusEl.textContent = '분석 중...';
+
+  try {
+    const res = await fetch(CHAT_API_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        question,
+        history: ontoChatHistory.slice(-6),
+        selected_node: selectedNodes[0] || null,
+        region: ontologyRegion,
+      }),
+    });
+
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      throw new Error(errData.error || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const answer = data.answer || '응답을 받지 못했습니다.';
+
+    // 로딩 버블 → 실제 답변으로 교체
+    loadingBubble.innerHTML = renderOntoMarkdown(answer);
+    ontoChatHistory.push({ role: 'assistant', content: answer });
+
+    // 참조 노드 하이라이트 힌트 (상태 표시)
+    if (data.referenced_nodes?.length) {
+      statusEl.textContent = `참조 노드: ${data.referenced_nodes.slice(0,5).join(', ')}${data.referenced_nodes.length > 5 ? ' 외' : ''}`;
+    } else {
+      statusEl.textContent = '';
+    }
+
+  } catch (err) {
+    loadingBubble.innerHTML = `<span class="text-red-400/80 text-[11px]">⚠ ${err.message.includes('Failed to fetch') || err.message.includes('NetworkError') ? 'server.py가 실행되지 않았습니다. 터미널에서 <code class="bg-zinc-800 px-1 rounded">python server.py</code> 를 먼저 실행해 주세요.' : err.message}</span>`;
+    statusEl.textContent = '서버 미연결';
+    ontoChatHistory.pop(); // 실패한 user 메시지 제거
+  } finally {
+    ontoChatLoading = false;
+    input.disabled = false;
+    sendBtn.disabled = false;
+    input.focus();
+  }
+}
+
+function appendOntoChatMessage(role, html) {
+  const history = document.getElementById('onto-chat-history');
+  const wrap = document.createElement('div');
+  if (role === 'user') {
+    wrap.className = 'flex justify-end';
+    wrap.innerHTML = `<div class="bg-zinc-800 rounded-xl rounded-tr-sm px-3 py-2 text-xs text-zinc-200 max-w-[85%] leading-relaxed">${html}</div>`;
+  } else {
+    wrap.className = 'flex justify-start';
+    wrap.innerHTML = `<div class="bg-amber-500/8 border border-amber-500/15 rounded-xl rounded-tl-sm px-3 py-2 text-xs text-zinc-300 max-w-[95%] leading-relaxed">${html}</div>`;
+  }
+  history.appendChild(wrap);
+  history.scrollTop = history.scrollHeight;
+  // 실제 텍스트가 교체될 내부 div 반환
+  return wrap.querySelector('div');
+}
+
+function renderOntoMarkdown(text) {
+  return text
+    .replace(/\*\*(.*?)\*\*/g, '<strong class="text-white font-semibold">$1</strong>')
+    .replace(/`(.*?)`/g, '<code class="bg-zinc-800 text-amber-300 px-1 rounded text-[10px]">$1</code>')
+    .replace(/\n/g, '<br>');
 }
 
 // ============================================================
