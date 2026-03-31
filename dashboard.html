@@ -11,7 +11,7 @@
 <script src="https://d3js.org/d3.v7.min.js"></script>
 <style>
 * { word-break: keep-all; box-sizing: border-box; }
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; font-size: 110%; }
 body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; color: #fff; }
 
 /* Scrollbar */
@@ -59,7 +59,7 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
 .side-panel.open { right: 0; }
 
 /* D3 graph */
-#ontology-graph { width: 100%; height: 680px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
+#ontology-graph { width: 100%; height: 820px; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); }
 .edge-label { font-size: 8px; fill: rgba(161,161,170,0.75); pointer-events: none; }
 .node text { fill: #e4e4e7; font-size: 11px; font-family: 'Pretendard', sans-serif; pointer-events: none; }
 .link { stroke-opacity: 0.5; }
@@ -89,10 +89,10 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
 <header class="sticky top-0 z-50 border-b border-white/5 backdrop-blur-xl bg-zinc-950/90">
   <div class="max-w-screen-2xl mx-auto px-6 h-14 flex items-center justify-between gap-4">
     <div class="flex items-center gap-3">
-      <div class="w-7 h-7 bg-amber-500 rounded flex items-center justify-center">
-        <span class="text-black font-black text-xs">제일</span>
+      <div class="h-7 bg-amber-500 rounded flex items-center justify-center px-1.5">
+        <img src="cheil_logo.png" alt="Cheil" class="h-5 w-auto object-contain">
       </div>
-      <span class="font-bold text-white text-sm">AI 전략 인텔리전스 플랫폼</span>
+      <span class="font-bold text-white text-sm">Cheil Strategier</span>
       <span class="hidden md:inline text-zinc-600 text-xs">|</span>
       <span class="hidden md:inline text-zinc-500 text-xs" id="last-updated">2026-03-22 09:00 기준</span>
     </div>
@@ -107,9 +107,8 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
 <div class="sticky top-14 z-40 border-b border-white/5 bg-zinc-950/95 backdrop-blur-xl">
   <div class="max-w-screen-2xl mx-auto px-6 flex gap-0 overflow-x-auto">
     <button class="tab-btn active text-sm px-4 py-3 whitespace-nowrap text-zinc-300 hover:text-white" onclick="switchTab('overview', this)">Overview</button>
-    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('swot', this)">SWOT 분석</button>
-    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('weaksignal', this)">Weak Signal</button>
-    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('opportunity', this)">Opportunity Map</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('swot', this)">SWOT</button>
+    <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('weaksignal', this)">Weak Signal &amp; Opportunity</button>
     <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('ontology', this)">Ontology</button>
     <button class="tab-btn text-sm px-4 py-3 whitespace-nowrap text-zinc-500 hover:text-white" onclick="switchTab('feed', this)">Intelligence Feed</button>
   </div>
@@ -119,156 +118,225 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
 
 <!-- ===== TAB: OVERVIEW ===== -->
 <div id="tab-overview" class="tab-content active">
-  <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+  <div class="flex gap-4 items-stretch">
 
-    <!-- SWOT 요약 카드 -->
-    <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('swot', document.querySelectorAll('.tab-btn')[1])">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">SWOT 요약</span>
-        <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+    <!-- 좌측: 모든 카드 스택 -->
+    <div class="flex-1 flex flex-col gap-4 min-w-0">
+
+      <!-- Row 1: SWOT + WS TOP3 + OPP TOP3 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+        <!-- SWOT 요약 -->
+        <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('swot', document.querySelectorAll('.tab-btn')[1])">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">SWOT 요약</span>
+            <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
+              <p class="text-xs text-emerald-400 font-semibold mb-1">S 강점</p>
+              <p class="text-sm text-zinc-300 leading-tight">국내 과점 지위<br>현금 4,700억 + 최대 실적</p>
+            </div>
+            <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-2">
+              <p class="text-xs text-red-400 font-semibold mb-1">W 약점</p>
+              <p class="text-sm text-zinc-300 leading-tight">삼성 의존도 71%<br>AI 전략 실행 격차</p>
+            </div>
+            <div class="bg-sky-500/10 border border-sky-500/20 rounded-lg p-2">
+              <p class="text-xs text-sky-400 font-semibold mb-1">O 기회</p>
+              <p class="text-sm text-zinc-300 leading-tight">생성형 AI 광고시장<br>리테일 미디어 성장</p>
+            </div>
+            <div class="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2">
+              <p class="text-xs text-orange-400 font-semibold mb-1">T 위협</p>
+              <p class="text-sm text-zinc-300 leading-tight">WPP 경로 리스크<br>빅테크 직접 집행</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Weak Signal TOP 3 -->
+        <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('weaksignal', document.querySelectorAll('.tab-btn')[2])">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">Weak Signal TOP 3</span>
+            <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white font-medium">[n] 취약성 마케팅</p>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
+                  <span class="text-xs text-emerald-400">▲ +12</span>
+                </div>
+              </div>
+              <span class="text-base font-bold text-amber-400">82</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:82%"></div></div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white font-medium">[t] 생성형AI 광고</p>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
+                  <span class="text-xs text-emerald-400">▲ +9</span>
+                </div>
+              </div>
+              <span class="text-base font-bold text-amber-400">76</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:76%"></div></div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white font-medium">[t] Retail Media AI</p>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">북미</span>
+                  <span class="text-xs text-emerald-400">▲ +7</span>
+                </div>
+              </div>
+              <span class="text-base font-bold text-amber-400">71</span>
+            </div>
+            <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:71%"></div></div>
+          </div>
+        </div>
+
+        <!-- Opportunity TOP 3 -->
+        <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('weaksignal', document.querySelectorAll('.tab-btn')[2])">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">Opportunity TOP 3</span>
+            <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
+          </div>
+          <div class="space-y-2.5">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white font-medium">AI 퍼포먼스 마케팅</p>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
+                  <span class="text-xs text-zinc-500">중요도 9.2 / 만족도 2.1</span>
+                </div>
+              </div>
+              <span class="text-base font-bold text-orange-400">16.3</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white font-medium">Retail Media AI 자동화</p>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">북미</span>
+                  <span class="text-xs text-zinc-500">중요도 8.8 / 만족도 2.4</span>
+                </div>
+              </div>
+              <span class="text-base font-bold text-orange-400">15.2</span>
+            </div>
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm text-white font-medium">컴플라이언스 크리에이티브</p>
+                <div class="flex items-center gap-1 mt-0.5">
+                  <span class="text-xs bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">유럽</span>
+                  <span class="text-xs text-zinc-500">중요도 8.3 / 만족도 1.8</span>
+                </div>
+              </div>
+              <span class="text-base font-bold text-orange-400">14.8</span>
+            </div>
+          </div>
+        </div>
+
       </div>
-      <div class="grid grid-cols-2 gap-2">
-        <div class="bg-emerald-500/10 border border-emerald-500/20 rounded-lg p-2">
-          <p class="text-[10px] text-emerald-400 font-semibold mb-1">S 강점</p>
-          <p class="text-[11px] text-zinc-300 leading-tight">국내 과점 지위<br>현금 4,700억 + 최대 실적</p>
+
+      <!-- Row 2: 매출구조 + AI 전환 지수 -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <!-- 매출 구조 도넛 -->
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">매출 구조</span>
+            <span class="text-xs text-zinc-500">2024 기준</span>
+          </div>
+          <div class="flex items-center gap-4">
+            <div style="position:relative;width:96px;height:96px;flex-shrink:0">
+              <canvas id="revenue-donut"></canvas>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none">
+                <span style="font-size:1.05rem;font-weight:700;color:#fff;line-height:1.1">71%</span>
+                <span style="font-size:0.65rem;color:#71717a">삼성 계열</span>
+              </div>
+            </div>
+            <div class="flex-1 space-y-2">
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-zinc-400">삼성 계열</span><span class="text-sm font-bold text-amber-400">71%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:71%"></div></div>
+              </div>
+              <div>
+                <div class="flex justify-between mb-1"><span class="text-sm text-zinc-400">비계열</span><span class="text-sm font-bold text-emerald-400">29%</span></div>
+                <div class="gauge-bar"><div class="gauge-fill bg-emerald-400" style="width:29%"></div></div>
+              </div>
+              <p class="text-xs text-zinc-600 mt-1">목표: 비계열 50% (2027)</p>
+            </div>
+          </div>
         </div>
-        <div class="bg-red-500/10 border border-red-500/20 rounded-lg p-2">
-          <p class="text-[10px] text-red-400 font-semibold mb-1">W 약점</p>
-          <p class="text-[11px] text-zinc-300 leading-tight">삼성 의존도 71%<br>AI 전략 실행 격차</p>
+
+        <!-- AI 전환 지수 -->
+        <div class="card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 전환 지수</span>
+            <span class="text-xs text-zinc-500">vs 글로벌 경쟁사</span>
+          </div>
+          <div id="competitor-bars" class="space-y-3"></div>
         </div>
-        <div class="bg-sky-500/10 border border-sky-500/20 rounded-lg p-2">
-          <p class="text-[10px] text-sky-400 font-semibold mb-1">O 기회</p>
-          <p class="text-[11px] text-zinc-300 leading-tight">생성형 AI 광고시장<br>리테일 미디어 성장</p>
+
+      </div>
+
+      <!-- Row 3: 최신 인텔리전스 + 타임라인 (5:3 비율) -->
+      <div class="grid grid-cols-5 gap-4">
+
+        <!-- 최신 인텔리전스 (좁게) -->
+        <div class="col-span-2 card p-4">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs text-zinc-400 uppercase tracking-widest">최신 인텔리전스</span>
+            <button class="text-xs text-amber-400 hover:text-amber-300 transition-colors" onclick="switchTab('feed', document.querySelectorAll('.tab-btn')[4])">전체 보기 →</button>
+          </div>
+          <div id="overview-feed-list" class="space-y-1"></div>
         </div>
-        <div class="bg-orange-500/10 border border-orange-500/20 rounded-lg p-2">
-          <p class="text-[10px] text-orange-400 font-semibold mb-1">T 위협</p>
-          <p class="text-[11px] text-zinc-300 leading-tight">WPP 경로 리스크<br>빅테크 직접 집행</p>
+
+        <!-- 최근 업데이트 타임라인 (넓게) -->
+        <div class="col-span-3 card p-5">
+          <p class="text-xs text-zinc-400 uppercase tracking-widest mb-4">최근 업데이트 타임라인</p>
+          <div class="relative pl-6 border-l border-white/5">
+            <div class="space-y-4">
+              <div class="relative timeline-item">
+                <p class="text-xs text-zinc-500">2026-03-22</p>
+                <p class="text-sm text-zinc-200">[t] 생성형AI 광고 신호 강도 76 → 82로 상승. 국내 마케팅 매체 언급 빈도 3주 연속 증가.</p>
+              </div>
+              <div class="relative timeline-item">
+                <p class="text-xs text-zinc-500">2026-03-21</p>
+                <p class="text-sm text-zinc-200">Opportunity Map: 북미 'Retail Media AI 자동화' 기회점수 14.1 → 15.2 상향. LinkedIn 포스트 급증.</p>
+              </div>
+              <div class="relative timeline-item">
+                <p class="text-xs text-zinc-500">2026-03-19</p>
+                <p class="text-sm text-zinc-200">SWOT W2(AI 전략 실행 격차) 관련 AdAge 기사 3건 신규 수집. Publicis AI 전환 비교 분석 추가.</p>
+              </div>
+              <div class="relative timeline-item">
+                <p class="text-xs text-zinc-500">2026-03-17</p>
+                <p class="text-sm text-zinc-200">유럽 [e] EU AI법 크리에이티브 신호 첫 감지. 5개월 전 대비 등장 빈도 340% 증가.</p>
+              </div>
+              <div class="relative timeline-item">
+                <p class="text-xs text-zinc-500">2026-03-15</p>
+                <p class="text-sm text-zinc-200">Ontology 그래프: W3(가치사슬 AI 공백) → OPP_ai_perf 연결 강도 0.85 → 0.90 업데이트.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- 우측: 저장된 인사이트 (고정폭, 전체 높이) -->
+    <div style="width:272px;flex-shrink:0" class="flex flex-col">
+      <div class="card p-4 flex-1 flex flex-col">
+        <div class="flex items-center justify-between mb-4">
+          <span class="text-xs text-zinc-400 uppercase tracking-widest">저장된 인사이트</span>
+          <iconify-icon icon="solar:star-bold" class="text-amber-400 text-xs"></iconify-icon>
+        </div>
+        <div id="saved-insights-list" class="space-y-3 flex-1 overflow-y-auto">
+          <p class="text-xs text-zinc-600">북마크한 항목이 여기에 표시됩니다.</p>
         </div>
       </div>
     </div>
 
-    <!-- Weak Signal TOP 3 -->
-    <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('weaksignal', document.querySelectorAll('.tab-btn')[2])">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">Weak Signal TOP 3</span>
-        <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
-      </div>
-      <div class="space-y-2">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-white font-medium">[n] 취약성 마케팅</p>
-            <div class="flex items-center gap-1 mt-0.5">
-              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
-              <span class="text-[10px] text-emerald-400">▲ +12</span>
-            </div>
-          </div>
-          <span class="text-sm font-bold text-amber-400">82</span>
-        </div>
-        <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:82%"></div></div>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-white font-medium">[t] 생성형AI 광고</p>
-            <div class="flex items-center gap-1 mt-0.5">
-              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
-              <span class="text-[10px] text-emerald-400">▲ +9</span>
-            </div>
-          </div>
-          <span class="text-sm font-bold text-amber-400">76</span>
-        </div>
-        <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:76%"></div></div>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-white font-medium">[t] Retail Media AI</p>
-            <div class="flex items-center gap-1 mt-0.5">
-              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">북미</span>
-              <span class="text-[10px] text-emerald-400">▲ +7</span>
-            </div>
-          </div>
-          <span class="text-sm font-bold text-amber-400">71</span>
-        </div>
-        <div class="gauge-bar"><div class="gauge-fill bg-amber-400" style="width:71%"></div></div>
-      </div>
-    </div>
-
-    <!-- Opportunity TOP 3 -->
-    <div class="card p-4 cursor-pointer hover:border-amber-500/30 transition-colors" onclick="switchTab('opportunity', document.querySelectorAll('.tab-btn')[3])">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">Opportunity TOP 3</span>
-        <iconify-icon icon="solar:arrow-right-linear" class="text-zinc-600 text-xs"></iconify-icon>
-      </div>
-      <div class="space-y-2.5">
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-white font-medium">AI 퍼포먼스 마케팅</p>
-            <div class="flex items-center gap-1 mt-0.5">
-              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">국내</span>
-              <span class="text-[10px] text-zinc-500">중요도 9.2 / 만족도 2.1</span>
-            </div>
-          </div>
-          <span class="text-sm font-bold text-orange-400">16.3</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-white font-medium">Retail Media AI 자동화</p>
-            <div class="flex items-center gap-1 mt-0.5">
-              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">북미</span>
-              <span class="text-[10px] text-zinc-500">중요도 8.8 / 만족도 2.4</span>
-            </div>
-          </div>
-          <span class="text-sm font-bold text-orange-400">15.2</span>
-        </div>
-        <div class="flex items-center justify-between">
-          <div>
-            <p class="text-xs text-white font-medium">컴플라이언스 크리에이티브</p>
-            <div class="flex items-center gap-1 mt-0.5">
-              <span class="text-[10px] bg-zinc-800 text-zinc-400 rounded px-1.5 py-0.5">유럽</span>
-              <span class="text-[10px] text-zinc-500">중요도 8.3 / 만족도 1.8</span>
-            </div>
-          </div>
-          <span class="text-sm font-bold text-orange-400">14.8</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- 저장된 인사이트 -->
-    <div class="card p-4">
-      <div class="flex items-center justify-between mb-3">
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">저장된 인사이트</span>
-        <iconify-icon icon="solar:star-bold" class="text-amber-400 text-xs"></iconify-icon>
-      </div>
-      <div id="saved-insights-list" class="space-y-2">
-        <p class="text-xs text-zinc-600">북마크한 항목이 여기에 표시됩니다.</p>
-      </div>
-    </div>
-  </div>
-
-  <!-- 최근 업데이트 타임라인 -->
-  <div class="card p-5">
-    <p class="text-xs text-zinc-400 uppercase tracking-widest mb-4">최근 업데이트 타임라인</p>
-    <div class="relative pl-6 border-l border-white/5">
-      <div class="space-y-4">
-        <div class="relative timeline-item">
-          <p class="text-xs text-zinc-500">2026-03-22</p>
-          <p class="text-sm text-zinc-200">[t] 생성형AI 광고 신호 강도 76 → 82로 상승. 국내 마케팅 매체 언급 빈도 3주 연속 증가.</p>
-        </div>
-        <div class="relative timeline-item">
-          <p class="text-xs text-zinc-500">2026-03-21</p>
-          <p class="text-sm text-zinc-200">Opportunity Map: 북미 'Retail Media AI 자동화' 기회점수 14.1 → 15.2 상향. LinkedIn 포스트 급증.</p>
-        </div>
-        <div class="relative timeline-item">
-          <p class="text-xs text-zinc-500">2026-03-19</p>
-          <p class="text-sm text-zinc-200">SWOT W2(AI 전략 실행 격차) 관련 AdAge 기사 3건 신규 수집. Publicis AI 전환 비교 분석 추가.</p>
-        </div>
-        <div class="relative timeline-item">
-          <p class="text-xs text-zinc-500">2026-03-17</p>
-          <p class="text-sm text-zinc-200">유럽 [e] EU AI법 크리에이티브 신호 첫 감지. 5개월 전 대비 등장 빈도 340% 증가.</p>
-        </div>
-        <div class="relative timeline-item">
-          <p class="text-xs text-zinc-500">2026-03-15</p>
-          <p class="text-sm text-zinc-200">Ontology 그래프: W3(가치사슬 AI 공백) → OPP_ai_perf 연결 강도 0.85 → 0.90 업데이트.</p>
-        </div>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -345,107 +413,104 @@ body { font-family: 'Pretendard', system-ui, sans-serif; background: #09090b; co
 
 <!-- ===== TAB: WEAK SIGNAL ===== -->
 <div id="tab-weaksignal" class="tab-content">
-  <div class="text-xs text-zinc-500 bg-zinc-900/50 border border-white/5 rounded-lg p-3 mb-4 leading-relaxed">
-    Weak Signal은 아직 업계 담론이 되지 않은 변화의 초기 신호입니다. Strong Signal이 됐을 때는 이미 경쟁사도 알고 있습니다. 이 탭은 그 이전 단계를 먼저 감지하여 제일기획이 선제적으로 전략 포지션을 잡을 수 있도록 지원합니다.
+  <div class="text-sm text-zinc-500 bg-zinc-900/50 border border-white/5 rounded-lg p-3 mb-4 leading-relaxed">
+    <strong class="text-zinc-400">Weak Signal</strong>은 아직 업계 담론이 되지 않은 변화의 초기 신호를 의미합니다. <strong class="text-zinc-400">Opportunity Map</strong>은 소셜미디어 데이터에서 중요도는 높으나 충족도가 낮은 비즈니스 기회를 나타냅니다.
   </div>
-  <div class="flex gap-2 mb-4">
-    <button class="region-btn active text-xs border border-white/10 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('ws','국내',this)">국내</button>
-    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('ws','북미',this)">북미</button>
-    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('ws','유럽',this)">유럽</button>
+  <!-- 공통 지역 선택 -->
+  <div class="flex items-center gap-3 mb-5">
+    <span class="text-xs text-zinc-500 uppercase tracking-widest">지역</span>
+    <div class="flex gap-2" id="shared-region-btns">
+      <button class="region-btn active text-xs border border-white/10 rounded-full px-4 py-1.5 transition-colors" onclick="setSharedRegion('국내',this)">국내</button>
+      <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setSharedRegion('북미',this)">북미</button>
+      <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setSharedRegion('유럽',this)">유럽</button>
+    </div>
   </div>
-  <div class="flex flex-col xl:flex-row gap-4 items-start">
-    <div class="w-full xl:flex-none" style="max-width:720px">
+  <!-- 2컬럼 그리드 -->
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+
+    <!-- 왼쪽: Weak Signal -->
+    <div class="flex flex-col gap-3">
+      <p class="text-xs text-zinc-400 uppercase tracking-widest font-semibold">Weak Signal</p>
       <div class="card p-4" style="position:relative;">
-        <canvas id="ws-chart" height="520"></canvas>
+        <canvas id="ws-chart" height="420"></canvas>
       </div>
-      <!-- 범례 -->
-      <div class="flex gap-4 mt-3 px-2">
+      <div class="flex gap-4 px-2">
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-amber-400 inline-block"></span><span class="text-xs text-zinc-400">[e] 환경·규제</span></div>
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-sky-400 inline-block"></span><span class="text-xs text-zinc-400">[n] 비즈니스 니즈</span></div>
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-violet-400 inline-block"></span><span class="text-xs text-zinc-400">[t] 기술·제품</span></div>
       </div>
-    </div>
-    <!-- AI 해석 패널 -->
-    <div class="card p-5">
-      <div class="flex items-center gap-2 mb-4">
-        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
-      </div>
-      <div id="ws-ai-panel">
-        <div class="space-y-4">
-          <div>
-            <p class="text-xs text-amber-400 font-semibold mb-1">감지된 주요 신호</p>
-            <p class="text-sm text-zinc-300 leading-relaxed" id="ws-signal-text">국내 기준, [n] 취약성 마케팅이 좌상단 Weak Signal 구간에서 가장 높은 증가율(20.8%)을 기록 중입니다. Z세대 타깃 캠페인 전략에 즉각 반영 가능한 신호입니다.</p>
-          </div>
-          <div>
-            <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
-            <p class="text-sm text-zinc-300 leading-relaxed" id="ws-impact-text">브랜드 크리에이티브 전략 수립 시 '완전함'보다 '진정성' 메시지 방향으로의 전환을 주요 클라이언트에게 선제 제안할 수 있습니다.</p>
-          </div>
-          <div>
-            <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
-            <p class="text-sm text-zinc-300 leading-relaxed" id="ws-action-text">향후 4주 내 Z세대 타깃 클라이언트(삼성 MX, 소비재 브랜드)에 취약성 마케팅 적용 캠페인 콘셉트 제안서 선제 제출을 권고합니다.</p>
+      <!-- AI 해석 패널 -->
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
+          <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+        </div>
+        <div id="ws-ai-panel">
+          <div class="space-y-4">
+            <div>
+              <p class="text-xs text-amber-400 font-semibold mb-1">감지된 주요 신호</p>
+              <p class="text-sm text-zinc-300 leading-relaxed" id="ws-signal-text">국내 기준, [n] 취약성 마케팅이 좌상단 Weak Signal 구간에서 가장 높은 증가율(20.8%)을 기록 중입니다. Z세대 타깃 캠페인 전략에 즉각 반영 가능한 신호입니다.</p>
+            </div>
+            <div>
+              <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
+              <p class="text-sm text-zinc-300 leading-relaxed" id="ws-impact-text">브랜드 크리에이티브 전략 수립 시 '완전함'보다 '진정성' 메시지 방향으로의 전환을 주요 클라이언트에게 선제 제안할 수 있습니다.</p>
+            </div>
+            <div>
+              <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
+              <p class="text-sm text-zinc-300 leading-relaxed" id="ws-action-text">향후 4주 내 Z세대 타깃 클라이언트(삼성 MX, 소비재 브랜드)에 취약성 마케팅 적용 캠페인 콘셉트 제안서 선제 제출을 권고합니다.</p>
+            </div>
           </div>
         </div>
-      </div>
-      <!-- 드릴다운 결과 (키워드 클릭 시) -->
-      <div id="ws-drilldown" class="hidden mt-4 pt-4 border-t border-white/5">
-        <p class="text-xs text-amber-400 font-semibold mb-2" id="ws-drill-title"></p>
-        <div id="ws-drill-news" class="space-y-2 mb-3"></div>
-        <div style="position:relative;height:80px"><canvas id="ws-trend-chart"></canvas></div>
-        <div id="ws-drill-tags" class="flex flex-wrap gap-1 mt-2"></div>
+        <div id="ws-drilldown" class="hidden mt-4 pt-4 border-t border-white/5">
+          <p class="text-xs text-amber-400 font-semibold mb-2" id="ws-drill-title"></p>
+          <div id="ws-drill-news" class="space-y-2 mb-3"></div>
+          <div style="position:relative;height:80px"><canvas id="ws-trend-chart"></canvas></div>
+          <div id="ws-drill-tags" class="flex flex-wrap gap-1 mt-2"></div>
+        </div>
       </div>
     </div>
-  </div>
-</div>
 
-<!-- ===== TAB: OPPORTUNITY MAP ===== -->
-<div id="tab-opportunity" class="tab-content">
-  <div class="text-xs text-zinc-500 bg-zinc-900/50 border border-white/5 rounded-lg p-3 mb-4 leading-relaxed">
-    소셜미디어 데이터에서 소비자와 시장의 실시간 반응을 읽어 실행 가능한 사업 기회를 시각화합니다. 특히 <strong class="text-zinc-300">중요도는 높으나 현재 충족도가 낮은 영역</strong>을 우선 식별합니다.
-  </div>
-  <div class="flex gap-2 mb-4">
-    <button class="region-btn active text-xs border border-white/10 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('opp','국내',this)">국내</button>
-    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('opp','북미',this)">북미</button>
-    <button class="region-btn text-xs border border-white/10 text-zinc-400 rounded-full px-4 py-1.5 transition-colors" onclick="setRegion('opp','유럽',this)">유럽</button>
-  </div>
-  <div class="flex flex-col xl:flex-row gap-4 items-start">
-    <div class="w-full xl:flex-none" style="max-width:720px">
+    <!-- 오른쪽: Opportunity Map -->
+    <div class="flex flex-col gap-3">
+      <p class="text-xs text-zinc-400 uppercase tracking-widest font-semibold">Opportunity Map</p>
       <div class="card p-4">
-        <canvas id="opp-chart" height="520"></canvas>
+        <canvas id="opp-chart" height="420"></canvas>
       </div>
-      <div class="flex gap-4 mt-3 px-2">
+      <div class="flex gap-4 px-2">
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-orange-400 inline-block"></span><span class="text-xs text-zinc-400">Underserved (핵심 기회)</span></div>
         <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-zinc-600 inline-block"></span><span class="text-xs text-zinc-400">Served / Over-served</span></div>
       </div>
-    </div>
-    <div class="card p-5">
-      <div class="flex items-center gap-2 mb-4">
-        <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
-        <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
-      </div>
-      <div id="opp-ai-panel">
-        <div class="space-y-4">
-          <div>
-            <p class="text-xs text-amber-400 font-semibold mb-1">핵심 기회</p>
-            <p class="text-sm text-zinc-300 leading-relaxed" id="opp-signal-text">국내 기준 'AI 퍼포먼스 마케팅'이 기회점수 16.3으로 최상위입니다. 중요도(9.2) 대비 만족도(2.1)의 격차가 가장 큰 미충족 영역입니다.</p>
-          </div>
-          <div>
-            <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
-            <p class="text-sm text-zinc-300 leading-relaxed" id="opp-impact-text">현재 제일기획의 DnA센터 역량을 AI 퍼포먼스 최적화 서비스로 패키징하면 즉시 수주 가능한 광고주 수요가 다수 존재합니다.</p>
-          </div>
-          <div>
-            <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
-            <p class="text-sm text-zinc-300 leading-relaxed" id="opp-action-text">AI 퍼포먼스 마케팅 전용 서비스 라인업을 2026 Q2 내 런칭하고, 비계열 광고주 영업 파이프라인 최우선 집중을 권고합니다.</p>
+      <!-- AI 해석 패널 -->
+      <div class="card p-5">
+        <div class="flex items-center gap-2 mb-4">
+          <iconify-icon icon="solar:magic-stick-3-bold" class="text-amber-400"></iconify-icon>
+          <span class="text-xs text-zinc-400 uppercase tracking-widest">AI 해석</span>
+        </div>
+        <div id="opp-ai-panel">
+          <div class="space-y-4">
+            <div>
+              <p class="text-xs text-amber-400 font-semibold mb-1">핵심 기회</p>
+              <p class="text-sm text-zinc-300 leading-relaxed" id="opp-signal-text">국내 기준 'AI 퍼포먼스 마케팅'이 기회점수 16.3으로 최상위입니다. 중요도(9.2) 대비 만족도(2.1)의 격차가 가장 큰 미충족 영역입니다.</p>
+            </div>
+            <div>
+              <p class="text-xs text-amber-400 font-semibold mb-1">사업 영향</p>
+              <p class="text-sm text-zinc-300 leading-relaxed" id="opp-impact-text">현재 제일기획의 DnA센터 역량을 AI 퍼포먼스 최적화 서비스로 패키징하면 즉시 수주 가능한 광고주 수요가 다수 존재합니다.</p>
+            </div>
+            <div>
+              <p class="text-xs text-amber-400 font-semibold mb-1">권고 액션</p>
+              <p class="text-sm text-zinc-300 leading-relaxed" id="opp-action-text">AI 퍼포먼스 마케팅 전용 서비스 라인업을 2026 Q2 내 런칭하고, 비계열 광고주 영업 파이프라인 최우선 집중을 권고합니다.</p>
+            </div>
           </div>
         </div>
-      </div>
-      <div id="opp-drilldown" class="hidden mt-4 pt-4 border-t border-white/5">
-        <p class="text-xs text-amber-400 font-semibold mb-2" id="opp-drill-title"></p>
-        <div id="opp-drill-social" class="space-y-2 mb-3"></div>
-        <div id="opp-drill-sentiment" class="mb-3"></div>
-        <div id="opp-drill-tags" class="flex flex-wrap gap-1"></div>
+        <div id="opp-drilldown" class="hidden mt-4 pt-4 border-t border-white/5">
+          <p class="text-xs text-amber-400 font-semibold mb-2" id="opp-drill-title"></p>
+          <div id="opp-drill-social" class="space-y-2 mb-3"></div>
+          <div id="opp-drill-sentiment" class="mb-3"></div>
+          <div id="opp-drill-tags" class="flex flex-wrap gap-1"></div>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -631,13 +696,13 @@ const SWOT_DATA = {
 
 const WS_DATA = {
   국내: [
-    {id:'ws_001', label:'[n] 취약성 마케팅', cat:'n', freq:28, growth:0.208, isWeak:true, score:82, change:12, news:[{t:'Z세대 마케팅 새 키워드 취약성',d:'2026-03-20',s:'마케팅위크'},{t:'불완전함을 드러내는 브랜드 전략',d:'2026-03-18',s:'이투데이'}], swot:['O4','W2'], opp:['취약성 콘텐츠 마케팅']},
+    {id:'ws_001', label:'[n] 취약성 마케팅', cat:'n', freq:28, growth:0.198, isWeak:true, score:82, change:12, news:[{t:'Z세대 마케팅 새 키워드 취약성',d:'2026-03-20',s:'마케팅위크'},{t:'불완전함을 드러내는 브랜드 전략',d:'2026-03-18',s:'이투데이'}], swot:['O4','W2'], opp:['취약성 콘텐츠 마케팅']},
     {id:'ws_002', label:'[t] 생성형AI 광고', cat:'t', freq:142, growth:0.187, isWeak:true, score:76, change:9, news:[{t:'생성AI 광고 제작 비용 80% 절감',d:'2026-03-19',s:'디지털데일리'},{t:'AI 카피라이팅 플랫폼 급성장',d:'2026-03-15',s:'아이뉴스24'}], swot:['O1','W3'], opp:['AI 퍼포먼스 마케팅']},
     {id:'ws_003', label:'[e] 개인정보 마케팅 규제', cat:'e', freq:89, growth:0.091, isWeak:false, score:41, change:-3, news:[{t:'쿠키 없는 타겟팅 대안 논의',d:'2026-03-10',s:'한국경제'}], swot:['T2'], opp:[]},
     {id:'ws_004', label:'[t] AI 인플루언서', cat:'t', freq:67, growth:0.134, isWeak:false, score:58, change:5, news:[{t:'가상 인플루언서 광고 효과 검증',d:'2026-03-12',s:'머니투데이'}], swot:['O1'], opp:[]},
     {id:'ws_005', label:'[n] 탈광고 소비자', cat:'n', freq:44, growth:0.062, isWeak:false, score:34, change:-2, news:[], swot:['T4'], opp:[]},
     {id:'ws_006', label:'[e] ESG 광고 규제', cat:'e', freq:56, growth:0.041, isWeak:false, score:28, change:1, news:[], swot:['T2'], opp:[]},
-    {id:'ws_007', label:'[t] 숏폼 커머스', cat:'t', freq:34, growth:0.193, isWeak:true, score:74, change:11, news:[{t:'틱톡 쇼핑 국내 론칭 임박',d:'2026-03-19',s:'아이뉴스24'}], swot:['O2','W3'], opp:['AI 크리에이티브 자동화']},
+    {id:'ws_007', label:'[t] 숏폼 커머스', cat:'t', freq:34, growth:0.183, isWeak:true, score:74, change:11, news:[{t:'틱톡 쇼핑 국내 론칭 임박',d:'2026-03-19',s:'아이뉴스24'}], swot:['O2','W3'], opp:['AI 크리에이티브 자동화']},
     {id:'ws_008', label:'[n] 감성 소비 리바이벌', cat:'n', freq:39, growth:0.171, isWeak:true, score:67, change:9, news:[{t:'Y2K 감성 마케팅 효과 분석',d:'2026-03-17',s:'마케팅위크'}], swot:['O4'], opp:[]},
     {id:'ws_009', label:'[e] 개인정보 비동의 마케팅', cat:'e', freq:72, growth:0.088, isWeak:false, score:41, change:2, news:[], swot:['T2'], opp:[]},
     {id:'ws_010', label:'[t] AI 모델 광고 출연', cat:'t', freq:27, growth:0.154, isWeak:false, score:55, change:7, news:[{t:'AI 가상모델 광고 법적 검토 본격화',d:'2026-03-14',s:'법률신문'}], swot:['O1','W2'], opp:[]}
@@ -668,13 +733,13 @@ const WS_DATA = {
 
 const OPP_DATA = {
   국내: [
-    {id:'opp_001', label:'AI 퍼포먼스 마케팅', imp:9.2, sat:2.1, score:16.3, social:[{t:'AI 기반 마케팅 ROI 측정이 시급하다는 의견 다수',p:'LinkedIn'},{t:'퍼포먼스 마케팅 자동화 솔루션 없어서 수동 작업 중',p:'Reddit'}], sentiment:{pos:0.22,neu:0.31,neg:0.47}, strength:['S4 DnA센터'], signal:['생성형AI 광고']},
-    {id:'opp_002', label:'Z세대 취약성 콘텐츠', imp:7.8, sat:3.2, score:12.4, social:[{t:'진정성 있는 브랜드 콘텐츠 수요 급증',p:'TikTok'},{t:'완벽한 광고보다 리얼한 스토리에 반응',p:'Instagram'}], sentiment:{pos:0.54,neu:0.28,neg:0.18}, strength:['S1 과점지위'], signal:['취약성 마케팅']},
-    {id:'opp_003', label:'AI 크리에이티브 자동화', imp:8.5, sat:3.8, score:13.2, social:[{t:'광고 소재 A/B 테스트 자동화 필요',p:'LinkedIn'}], sentiment:{pos:0.41,neu:0.35,neg:0.24}, strength:['S4 CopyJoe·ContiJoe'], signal:['생성형AI 광고']},
+    {id:'opp_001', label:'AI 퍼포먼스 마케팅', imp:8.6, sat:1.6, score:16.3, social:[{t:'AI 기반 마케팅 ROI 측정이 시급하다는 의견 다수',p:'LinkedIn'},{t:'퍼포먼스 마케팅 자동화 솔루션 없어서 수동 작업 중',p:'Reddit'}], sentiment:{pos:0.22,neu:0.31,neg:0.47}, strength:['S4 DnA센터'], signal:['생성형AI 광고']},
+    {id:'opp_002', label:'Z세대 취약성 콘텐츠', imp:7.8, sat:3.5, score:12.4, social:[{t:'진정성 있는 브랜드 콘텐츠 수요 급증',p:'TikTok'},{t:'완벽한 광고보다 리얼한 스토리에 반응',p:'Instagram'}], sentiment:{pos:0.54,neu:0.28,neg:0.18}, strength:['S1 과점지위'], signal:['취약성 마케팅']},
+    {id:'opp_003', label:'AI 크리에이티브 자동화', imp:3.8, sat:7.6, score:2.1, social:[{t:'광고 소재 A/B 테스트 자동화 필요',p:'LinkedIn'}], sentiment:{pos:0.41,neu:0.35,neg:0.24}, strength:['S4 CopyJoe·ContiJoe'], signal:['생성형AI 광고']},
     {id:'opp_004', label:'삼성 비계열 영업', imp:6.2, sat:5.1, score:7.3, social:[], sentiment:{pos:0.38,neu:0.42,neg:0.20}, strength:['S1','S2'], signal:[]},
     {id:'opp_005', label:'마케팅 컨설팅 강화', imp:7.1, sat:4.8, score:9.4, social:[{t:'에이전시에 전략 컨설팅 역량 요구 증가',p:'LinkedIn'}], sentiment:{pos:0.48,neu:0.32,neg:0.20}, strength:['S3 M&A자산'], signal:['취약성 마케팅']},
-    {id:'opp_006', label:'숏폼 영상 광고 자동화', imp:8.1, sat:2.8, score:13.4, social:[{t:'숏폼 광고 소재 제작 속도 경쟁 심화',p:'LinkedIn'},{t:'TikTok 광고 자동화 수요 폭발',p:'Twitter'}], sentiment:{pos:0.31,neu:0.28,neg:0.41}, strength:['S4 CopyJoe'], signal:['숏폼 커머스']},
-    {id:'opp_007', label:'데이터 클린룸 서비스', imp:7.4, sat:3.1, score:11.7, social:[{t:'삼성 1st party 데이터 활용 방안 논의',p:'LinkedIn'}], sentiment:{pos:0.39,neu:0.35,neg:0.26}, strength:['S3 ColorData'], signal:['개인정보 비동의 마케팅']},
+    {id:'opp_006', label:'숏폼 영상 광고 자동화', imp:3.4, sat:7.3, score:1.8, social:[{t:'숏폼 광고 소재 제작 속도 경쟁 심화',p:'LinkedIn'},{t:'TikTok 광고 자동화 수요 폭발',p:'Twitter'}], sentiment:{pos:0.31,neu:0.28,neg:0.41}, strength:['S4 CopyJoe'], signal:['숏폼 커머스']},
+    {id:'opp_007', label:'데이터 클린룸 서비스', imp:7.4, sat:0.7, score:11.7, social:[{t:'삼성 1st party 데이터 활용 방안 논의',p:'LinkedIn'}], sentiment:{pos:0.39,neu:0.35,neg:0.26}, strength:['S3 ColorData'], signal:['개인정보 비동의 마케팅']},
     {id:'opp_008', label:'AI 모델 캐스팅 서비스', imp:6.7, sat:6.2, score:7.2, social:[], sentiment:{pos:0.55,neu:0.28,neg:0.17}, strength:['S4 ContiJoe'], signal:['AI 모델 광고 출연']},
     {id:'opp_009', label:'소형 브랜드 광고 자동화', imp:3.4, sat:2.1, score:4.7, social:[], sentiment:{pos:0.41,neu:0.38,neg:0.21}, strength:['S4 CopyJoe'], signal:[]},
     {id:'opp_010', label:'라디오·팟캐스트 광고', imp:2.8, sat:3.5, score:2.1, social:[], sentiment:{pos:0.45,neu:0.40,neg:0.15}, strength:['S1 과점지위'], signal:[]},
@@ -699,9 +764,9 @@ const OPP_DATA = {
     {id:'opp_202', label:'지속가능 광고 인증', imp:7.6, sat:3.4, score:11.8, social:[{t:'Green advertising standards gaining traction',p:'LinkedIn'}], sentiment:{pos:0.47,neu:0.33,neg:0.20}, strength:['S3 Iris'], signal:['지속가능 광고']},
     {id:'opp_203', label:'BYD 유럽 캠페인', imp:8.1, sat:4.5, score:11.7, social:[{t:'BYD needs localised European messaging',p:'LinkedIn'}], sentiment:{pos:0.38,neu:0.42,neg:0.20}, strength:['S3 M&A자산'], signal:[]},
     {id:'opp_204', label:'Luxury Digital 전략', imp:7.8, sat:2.9, score:12.7, social:[{t:'Luxury brands need cultural nuance in digital',p:'LinkedIn'},{t:'LVMH digital agency model failing',p:'Reddit'}], sentiment:{pos:0.22,neu:0.35,neg:0.43}, strength:['S3 Iris'], signal:['Luxury Digital Shift']},
-    {id:'opp_205', label:'CTV 유럽 현지화', imp:7.3, sat:3.2, score:11.4, social:[{t:'European CTV ad market lacks local expertise',p:'LinkedIn'}], sentiment:{pos:0.31,neu:0.39,neg:0.30}, strength:['S3 Iris'], signal:['Connected TV EU']},
+    {id:'opp_205', label:'CTV 유럽 현지화', imp:3.6, sat:7.5, score:1.9, social:[{t:'European CTV ad market lacks local expertise',p:'LinkedIn'}], sentiment:{pos:0.31,neu:0.39,neg:0.30}, strength:['S3 Iris'], signal:['Connected TV EU']},
     {id:'opp_206', label:'Carbon-neutral 광고', imp:6.4, sat:4.1, score:8.7, social:[], sentiment:{pos:0.44,neu:0.36,neg:0.20}, strength:['O4 컨설팅'], signal:['Carbon Ad Tax 논의']},
-    {id:'opp_207', label:'Multi-market AI 크리에이티브', imp:8.6, sat:2.2, score:15.0, social:[{t:'Pan-European campaigns need AI localization',p:'LinkedIn'},{t:'Current translation tools miss cultural context',p:'Reddit'}], sentiment:{pos:0.18,neu:0.27,neg:0.55}, strength:['S4 CopyJoe'], signal:['EU AI법 크리에이티브']},
+    {id:'opp_207', label:'Multi-market AI 크리에이티브', imp:3.5, sat:7.9, score:1.6, social:[{t:'Pan-European campaigns need AI localization',p:'LinkedIn'},{t:'Current translation tools miss cultural context',p:'Reddit'}], sentiment:{pos:0.18,neu:0.27,neg:0.55}, strength:['S4 CopyJoe'], signal:['EU AI법 크리에이티브']},
     {id:'opp_208', label:'Regional Press Digital', imp:2.5, sat:3.9, score:1.1, social:[], sentiment:{pos:0.49,neu:0.35,neg:0.16}, strength:[], signal:[]},
     {id:'opp_209', label:'Event Sponsorship AI', imp:3.7, sat:4.3, score:3.1, social:[], sentiment:{pos:0.47,neu:0.35,neg:0.18}, strength:['S1 과점지위'], signal:[]},
     {id:'opp_210', label:'Radio & Podcast EU', imp:2.8, sat:5.1, score:0.5, social:[], sentiment:{pos:0.53,neu:0.32,neg:0.15}, strength:[], signal:[]},
@@ -1009,7 +1074,14 @@ let selectedOppId = null;
 let wsChart = null;
 let oppChart = null;
 let wsTrendChart = null;
-let savedBookmarks = {};
+let savedBookmarks = {
+  'W1': { label: 'W1: 삼성 의존도 71%', memo: '비계열 매출 다변화가 최우선 과제. WPP 붕괴 선례처럼 특정 클라이언트 집중은 구조적 취약점.', date: '2026-03-15' },
+  'O2': { label: 'O2: 리테일 미디어 시장', memo: '삼성닷컴, 삼성스토어의 리테일 미디어 플랫폼 전환 시 제일기획 운영 에이전시 역할 선점 가능. McKinney 연계 북미 수주와도 직결.', date: '2026-03-18' },
+  'O3': { label: 'O3: 신흥시장 성장', memo: '북미와 유럽 비계열 광고주는 삼성 이해충돌 리스크 없는 순수 성장 기회. McKinney(북미), Iris(유럽) 자회사를 교두보로 영업 파이프라인 집중.', date: '2026-03-22' },
+  'f009': { label: '리테일 미디어 시장 1,795억 달러 돌파', memo: '국내·북미 Opportunity Map 상위 기회와 직결. 삼성닷컴·스토어의 리테일 미디어 플랫폼 전환 시 제일기획 운영 에이전시 역할 선점 가능.', date: '2026-03-17' },
+  'f013': { label: 'WPP 시총 87% 소멸 분석', memo: 'W1(삼성 의존도 71%)과 WPP 붕괴 패턴 유사성의 핵심 근거. 온톨로지 W1→T1 연결 강도 0.9의 배경 자료.', date: '2026-03-16' },
+  'f014': { label: 'McKinney AI 크리에이티브 파이프라인 착수', memo: 'O3 신흥시장 교두보 실행의 구체적 사례. CopyJoe·ContiJoe 통합 시 글로벌 AI 크리에이티브 플랫폼 구축 가능.', date: '2026-03-14' }
+};
 let selectedNodes = [];
 
 // ============================================================
@@ -1020,8 +1092,7 @@ function switchTab(tabId, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('active'); b.classList.add('text-zinc-500'); b.classList.remove('text-zinc-300'); });
   document.getElementById('tab-' + tabId).classList.add('active');
   if (btn) { btn.classList.add('active'); btn.classList.remove('text-zinc-500'); btn.classList.add('text-zinc-300'); }
-  if (tabId === 'weaksignal') setTimeout(() => renderWSChart(), 50);
-  if (tabId === 'opportunity') setTimeout(() => renderOppChart(), 50);
+  if (tabId === 'weaksignal') setTimeout(() => { renderWSChart(); renderOppChart(); }, 50);
   if (tabId === 'ontology') setTimeout(() => renderOntology(), 50);
   if (tabId === 'feed') renderFeed();
   if (tabId === 'swot') renderSWOT();
@@ -1145,11 +1216,17 @@ function renderWSChart() {
         const yPx = scales.y.getPixelForValue(avgGrowth);
         ctx.save();
         ctx.setLineDash([4,4]);
-        ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+        ctx.strokeStyle = 'rgba(251,146,60,0.55)';
         ctx.lineWidth = 1;
         ctx.beginPath(); ctx.moveTo(xPx, chartArea.top); ctx.lineTo(xPx, chartArea.bottom); ctx.stroke();
         ctx.beginPath(); ctx.moveTo(chartArea.left, yPx); ctx.lineTo(chartArea.right, yPx); ctx.stroke();
         ctx.setLineDash([]);
+        // Quadrant labels
+        ctx.font = 'bold 11px Pretendard, sans-serif';
+        ctx.fillStyle = 'rgba(251,191,36,0.5)';
+        ctx.fillText('Weak', chartArea.left + 8, chartArea.top + 18);
+        ctx.fillStyle = 'rgba(52,211,153,0.5)';
+        ctx.fillText('Strong', xPx + 8, chartArea.top + 18);
         // Label weak signal points
         const data = chart.data.datasets[0].data;
         data.forEach((d,i) => {
@@ -1374,6 +1451,79 @@ function showOppDetail(opp) {
 // ============================================================
 // REGION SETTERS
 // ============================================================
+// ============================================================
+// OVERVIEW COMPONENTS
+// ============================================================
+function renderRevenueDonut() {
+  const ctx = document.getElementById('revenue-donut').getContext('2d');
+  new Chart(ctx, {
+    type: 'doughnut',
+    data: { datasets: [{ data: [71, 29], backgroundColor: ['rgba(251,191,36,0.85)','rgba(52,211,153,0.75)'], borderWidth: 0, hoverOffset: 3 }] },
+    options: { responsive: true, maintainAspectRatio: true, cutout: '68%', plugins: { legend:{display:false}, tooltip:{enabled:false} } }
+  });
+}
+
+function renderWsHeatmap() {
+  const regions = ['국내','북미','유럽'];
+  const cats = [{k:'n',label:'[n] 비즈니스',rgb:'56,189,248'},{k:'t',label:'[t] 기술·제품',rgb:'167,139,250'},{k:'e',label:'[e] 환경·규제',rgb:'251,191,36'}];
+  const grid = cats.map(c => regions.map(r => { const items = WS_DATA[r].filter(d=>d.cat===c.k); return items.length ? Math.max(...items.map(d=>d.score)) : 0; }));
+  const maxScore = Math.max(...grid.flat()) || 1;
+  let html = `<div class="grid gap-1" style="grid-template-columns:auto repeat(3,1fr)">
+    <div></div>${regions.map(r=>`<div class="text-[10px] text-zinc-500 text-center pb-1">${r}</div>`).join('')}`;
+  cats.forEach((c,ci) => {
+    html += `<div class="text-[10px] text-zinc-400 flex items-center pr-1">${c.label}</div>`;
+    grid[ci].forEach(score => {
+      const op = (score/maxScore*0.65+0.08).toFixed(2);
+      html += `<div class="rounded p-1.5 text-center" style="background:rgba(${c.rgb},${op})"><span class="text-xs font-bold text-white">${score}</span></div>`;
+    });
+  });
+  html += '</div>';
+  document.getElementById('ws-heatmap').innerHTML = html;
+}
+
+function renderCompetitorBars() {
+  const items = [
+    {name:'Publicis', score:73, note:'Marcel AI 전면 전환', color:'rgba(52,211,153,0.85)'},
+    {name:'제일기획', score:35, note:'CopyJoe·ContiJoe 운영', color:'rgba(251,191,36,0.85)'},
+    {name:'WPP', score:18, note:'전략 실행 지연 중', color:'rgba(239,68,68,0.75)'}
+  ];
+  document.getElementById('competitor-bars').innerHTML = items.map(c => `
+    <div>
+      <div class="flex justify-between mb-1">
+        <span class="text-xs text-zinc-300 font-medium">${c.name}</span>
+        <span class="text-xs font-bold" style="color:${c.color}">${c.score}%</span>
+      </div>
+      <div class="gauge-bar"><div class="gauge-fill" style="width:${c.score}%;background:${c.color}"></div></div>
+      <p class="text-[10px] text-zinc-600 mt-0.5">${c.note}</p>
+    </div>`).join('');
+}
+
+function renderOverviewFeed() {
+  const typeColor = {뉴스:'rgba(56,189,248,1)',소셜:'rgba(167,139,250,1)',News:'rgba(56,189,248,1)',Social:'rgba(167,139,250,1)'};
+  document.getElementById('overview-feed-list').innerHTML = FEED_DATA.slice(0,5).map(f => `
+    <div class="flex items-start gap-2 px-2 py-2 rounded-lg hover:bg-white/5 cursor-pointer transition-colors" onclick="switchTab('feed', document.querySelectorAll('.tab-btn')[4])">
+      <div class="flex-1 min-w-0">
+        <p class="text-xs text-zinc-200 leading-snug">${f.title}</p>
+        <div class="flex items-center gap-1.5 mt-0.5">
+          <span class="text-[10px] text-zinc-500">${f.src}</span>
+          <span class="text-[10px] text-zinc-700">·</span>
+          <span class="text-[10px] font-medium" style="color:${typeColor[f.type]||'#71717a'}">${f.type}</span>
+          <span class="text-[10px] text-zinc-700">·</span>
+          <span class="text-[10px] text-zinc-500">${f.region}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function setSharedRegion(region, btn) {
+  const parent = btn.parentElement;
+  parent.querySelectorAll('.region-btn').forEach(b => { b.classList.remove('active','text-white'); b.classList.add('text-zinc-400'); });
+  btn.classList.add('active'); btn.classList.remove('text-zinc-400'); btn.classList.add('text-white');
+  wsRegion = region; oppRegion = region;
+  renderWSChart(); updateWSAIPanel(region);
+  renderOppChart(); updateOppAIPanel(region);
+}
+
 function setRegion(type, region, btn) {
   const parent = btn.parentElement;
   parent.querySelectorAll('.region-btn').forEach(b => { b.classList.remove('active','text-white'); b.classList.add('text-zinc-400'); });
@@ -1415,7 +1565,7 @@ function renderOntology() {
   const svg = d3.select('#ontology-graph');
   svg.selectAll('*').remove();
   const W = svg.node().getBoundingClientRect().width || 820;
-  const H = 680;
+  const H = 820;
   svg.attr('viewBox', `0 0 ${W} ${H}`).attr('height', H);
 
   const region = ontologyRegion;
@@ -2099,6 +2249,10 @@ function renderOntoMarkdown(text) {
 document.addEventListener('DOMContentLoaded', () => {
   renderSWOT();
   renderFeed();
+  updateSavedInsights();
+  renderRevenueDonut();
+  renderCompetitorBars();
+  renderOverviewFeed();
   // Style feed-filter active
   document.querySelector('.feed-filter').classList.add('text-white');
   document.querySelector('.feed-filter').classList.remove('text-zinc-400');
