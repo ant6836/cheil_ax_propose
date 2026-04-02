@@ -2197,8 +2197,8 @@ async function sendOntologyChat() {
     const data = await res.json();
     const answer = data.answer || '응답을 받지 못했습니다.';
 
-    // 로딩 버블 → 실제 답변으로 교체
-    loadingBubble.innerHTML = renderOntoMarkdown(answer);
+    // 로딩 버블 → 타이핑 스트리밍 효과로 교체
+    typewriterEffect(loadingBubble, answer);
     ontoChatHistory.push({ role: 'assistant', content: answer });
 
     // 참조 노드 하이라이트 힌트 (상태 표시)
@@ -2234,6 +2234,27 @@ function appendOntoChatMessage(role, html) {
   history.scrollTop = history.scrollHeight;
   // 실제 텍스트가 교체될 내부 div 반환
   return wrap.querySelector('div');
+}
+
+function typewriterEffect(el, text) {
+  let i = 0;
+  const total = text.length;
+  // 한 번에 3글자씩, 20ms 간격 → 자연스러운 스트리밍 속도
+  const CHUNK = 3;
+  const DELAY = 20;
+
+  el.innerHTML = '';
+
+  function tick() {
+    if (i >= total) return;
+    i = Math.min(i + CHUNK, total);
+    el.innerHTML = renderOntoMarkdown(text.slice(0, i));
+    const hist = document.getElementById('onto-chat-history');
+    if (hist) hist.scrollTop = hist.scrollHeight;
+    setTimeout(tick, DELAY);
+  }
+
+  tick();
 }
 
 function renderOntoMarkdown(text) {
